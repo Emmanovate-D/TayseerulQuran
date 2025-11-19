@@ -1,0 +1,108 @@
+const express = require('express');
+const cors = require('cors');
+const env = require('./config/env');
+const { testConnection } = require('./config/database');
+const { logger } = require('./utils/logger');
+const { errorHandler, notFoundHandler } = require('./middleware/errorHandler');
+const routes = require('./routes');
+
+// Initialize Express app
+const app = express();
+
+// Middleware
+// CORS configuration - allow multiple origins for development
+const allowedOrigins = env.CORS_ORIGIN ? 
+  (Array.isArray(env.CORS_ORIGIN) ? env.CORS_ORIGIN : env.CORS_ORIGIN.split(',').map(o => o.trim())) :
+  [
+    'http://localhost:5500',
+    'http://localhost:8080',
+    'http://127.0.0.1:5500',
+    'http://127.0.0.1:8080',
+    'http://localhost:3000'
+  ];
+
+app.use(cors({
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.indexOf(origin) !== -1 || allowedOrigins.includes('*')) {
+      callback(null, true);
+    } else {
+      // In development, allow all origins
+      if (env.NODE_ENV === 'development') {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    }
+  },
+  credentials: true
+}));
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(logger);
+
+// API Routes
+app.use('/api', routes);
+
+// Health check endpoint
+app.get('/', (req, res) => {
+  res.json({
+    success: true,
+    message: 'TayseerulQuran Backend API',
+    version: '1.0.0',
+    timestamp: new Date().toISOString()
+  });
+});
+
+// 404 handler
+app.use(notFoundHandler);
+
+// Error handler (must be last)
+app.use(errorHandler);
+
+// Start server
+const startServer = async () => {
+  try {
+    // Test database connection
+    const dbConnected = await testConnection();
+    
+    if (!dbConnected && env.NODE_ENV === 'production') {
+      console.error('❌ Database connection failed. Exiting...');
+      process.exit(1);
+    }
+
+    // Start listening
+    const PORT = env.PORT;
+    app.listen(PORT, () => {
+      console.log(`🚀 Server is running on port ${PORT}`);
+      console.log(`📝 Environment: ${env.NODE_ENV}`);
+      console.log(`🌐 API URL: http://localhost:${PORT}/api`);
+      console.log(`💚 Health Check: http://localhost:${PORT}/api/health`);
+    });
+  } catch (error) {
+    console.error('❌ Failed to start server:', error);
+    process.exit(1);
+  }
+};
+
+// Handle unhandled promise rejections
+process.on('unhandledRejection', (err) => {
+  console.error('❌ Unhandled Promise Rejection:', err);
+  if (env.NODE_ENV === 'production') {
+    process.exit(1);
+  }
+});
+
+// Handle uncaught exceptions
+process.on('uncaughtException', (err) => {
+  console.error('❌ Uncaught Exception:', err);
+  process.exit(1);
+});
+
+// Start the server
+startServer();
+
+module.exports = app;
+
