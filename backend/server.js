@@ -1,10 +1,11 @@
 const express = require('express');
 const cors = require('cors');
 const env = require('./config/env');
-const { testConnection } = require('./config/database');
+const { testConnection, sequelize } = require('./config/database');
 const { logger } = require('./utils/logger');
 const { errorHandler, notFoundHandler } = require('./middleware/errorHandler');
 const routes = require('./routes');
+const { seedDatabase } = require('./scripts/seed');
 
 // Initialize Express app
 const app = express();
@@ -71,6 +72,23 @@ const startServer = async () => {
     if (!dbConnected && env.NODE_ENV === 'production') {
       console.error('❌ Database connection failed. Exiting...');
       process.exit(1);
+    }
+
+    // Sync database models (create tables if they don't exist)
+    // Using { alter: false } to avoid modifying existing tables
+    try {
+      console.log('🔄 Syncing database models...');
+      await sequelize.sync({ alter: false });
+      console.log('✅ Database tables synchronized');
+    } catch (syncError) {
+      console.error('⚠️  Database sync warning:', syncError.message);
+      // Continue even if sync has issues (tables might already exist)
+    }
+
+    // Seed database with initial data (roles and test users)
+    // Only runs if tables are empty or data doesn't exist
+    if (dbConnected) {
+      await seedDatabase();
     }
 
     // Start listening
