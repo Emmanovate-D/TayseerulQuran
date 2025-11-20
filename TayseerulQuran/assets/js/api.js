@@ -42,19 +42,36 @@ async function apiRequest(endpoint, options = {}) {
   
   try {
     const response = await fetch(url, config);
-    const data = await response.json();
     
+    // Check if response is JSON
+    let data;
+    const contentType = response.headers.get('content-type');
+    if (contentType && contentType.includes('application/json')) {
+      data = await response.json();
+    } else {
+      const text = await response.text();
+      throw new Error(text || 'Invalid response from server');
+    }
+    
+    // Handle error responses
     if (!response.ok) {
-      throw new Error(data.message || 'An error occurred');
+      // Check if data has a message property
+      const errorMessage = data.message || data.error || `Server error: ${response.status}`;
+      throw new Error(errorMessage);
     }
     
     return data;
   } catch (error) {
     // Handle network errors
-    if (error.message === 'Failed to fetch') {
+    if (error.name === 'TypeError' && error.message.includes('fetch')) {
       throw new Error('Unable to connect to server. Please check if the backend is running.');
     }
-    throw error;
+    // Re-throw if it's already an Error with a message
+    if (error instanceof Error) {
+      throw error;
+    }
+    // Otherwise wrap it
+    throw new Error(error.message || 'An unexpected error occurred');
   }
 }
 
