@@ -1,6 +1,9 @@
 // API Configuration
+// Automatically detect environment: use production API if on Vercel, otherwise use localhost for development
 const API_CONFIG = {
-  BASE_URL: 'http://localhost:3000/api',
+  BASE_URL: window.location.hostname.includes('vercel.app') || window.location.hostname.includes('onrender.com')
+    ? 'https://tayseerulquran.onrender.com/api'
+    : 'http://localhost:3000/api',
   getAuthToken: () => localStorage.getItem('authToken'),
   setAuthToken: (token) => localStorage.setItem('authToken', token),
   removeAuthToken: () => localStorage.removeItem('authToken'),
