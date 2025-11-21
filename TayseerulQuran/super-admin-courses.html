@@ -108,54 +108,10 @@
                                         </thead>
                                         <tbody>
                                             <tr>
-                                                <td>1</td>
-                                                <td>Complete Web Development Bootcamp</td>
-                                                <td>John Smith</td>
-                                                <td>Web Development</td>
-                                                <td>$99.00</td>
-                                                <td>245</td>
-                                                <td><span class="badge bg-success">Published</span></td>
-                                                <td>
-                                                    <button class="btn btn-sm btn-info px-2 py-1" data-bs-toggle="modal" data-bs-target="#editCourseModal" data-permission="edit_course" style="font-size: 0.7rem;">
-                                                        <i class="icofont-edit"></i>
-                                                    </button>
-                                                    <button class="btn btn-sm btn-danger px-2 py-1" onclick="deleteCourse(1)" data-permission="delete_course" style="font-size: 0.7rem;">
-                                                        <i class="icofont-trash"></i>
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <td>2</td>
-                                                <td>Data Science Masterclass</td>
-                                                <td>Sarah Johnson</td>
-                                                <td>Data Science</td>
-                                                <td>$149.00</td>
-                                                <td>189</td>
-                                                <td><span class="badge bg-success">Published</span></td>
-                                                <td>
-                                                    <button class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#editCourseModal" data-permission="edit_course">
-                                                        <i class="icofont-edit"></i>
-                                                    </button>
-                                                    <button class="btn btn-sm btn-danger" onclick="deleteCourse(2)" data-permission="delete_course">
-                                                        <i class="icofont-trash"></i>
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <td>3</td>
-                                                <td>UI/UX Design Fundamentals</td>
-                                                <td>Emily Davis</td>
-                                                <td>Design</td>
-                                                <td>$79.00</td>
-                                                <td>312</td>
-                                                <td><span class="badge bg-success">Published</span></td>
-                                                <td>
-                                                    <button class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#editCourseModal" data-permission="edit_course">
-                                                        <i class="icofont-edit"></i>
-                                                    </button>
-                                                    <button class="btn btn-sm btn-danger" onclick="deleteCourse(3)" data-permission="delete_course">
-                                                        <i class="icofont-trash"></i>
-                                                    </button>
+                                                <td colspan="8" class="text-center">
+                                                    <div class="spinner-border text-primary" role="status">
+                                                        <span class="visually-hidden">Loading...</span>
+                                                    </div>
                                                 </td>
                                             </tr>
                                         </tbody>
@@ -267,30 +223,291 @@
 
     </div>
 
+    <!-- jQuery from CDN -->
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js" integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin="anonymous"></script>
+    <script>
+        if (typeof jQuery === 'undefined') {
+            const script = document.createElement('script');
+            script.src = 'assets/js/vendor/jquery-3.5.1.min.js';
+            document.head.appendChild(script);
+        }
+    </script>
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz" crossorigin="anonymous"></script>
     <script src="assets/js/vendor/modernizr-3.11.2.min.js"></script>
-    <script src="assets/js/vendor/jquery-3.5.1.min.js"></script>
-    <script src="assets/js/plugins.min.js"></script>
+    <script>
+        const pluginsScript = document.createElement('script');
+        pluginsScript.src = 'assets/js/plugins.min.js';
+        pluginsScript.onerror = function() {
+            console.warn('plugins.min.js not found, continuing without it');
+        };
+        document.head.appendChild(pluginsScript);
+    </script>
     <script src="assets/js/main.js"></script>
+    <script src="assets/js/api.js"></script>
     <script src="assets/js/role-access-control.js"></script>
     <script>
         localStorage.setItem('userRole', 'super_admin');
         
-        function deleteCourse(id) {
-            if (confirm('Are you sure you want to delete this course?')) {
-                alert('Course deleted successfully!');
-                // Add actual delete logic here
+        let currentEditCourseId = null;
+        
+        function showMessage(message, type = 'success') {
+            const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
+            const messageHtml = `<div class="alert ${alertClass} alert-dismissible fade show" role="alert" style="position: fixed; top: 20px; right: 20px; z-index: 9999; min-width: 300px;">
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>`;
+            $('body').append(messageHtml);
+            setTimeout(() => $('.alert').fadeOut(), 5000);
+        }
+        
+        // Load courses from API
+        async function loadCourses() {
+            try {
+                if (typeof API === 'undefined' || typeof API.course === 'undefined') {
+                    console.error('API not loaded');
+                    return;
+                }
+                
+                console.log('Loading courses from API...');
+                const response = await API.course.getAll();
+                const tbody = $('#coursesTable tbody');
+                
+                if (response.success && response.data) {
+                    const courses = response.data.courses || response.data || [];
+                    
+                    if (courses.length === 0) {
+                        tbody.html('<tr><td colspan="8" class="text-center text-muted">No courses found. Create your first course!</td></tr>');
+                        return;
+                    }
+                    
+                    let html = '';
+                    courses.forEach(course => {
+                        const instructor = course.tutor?.user ? `${course.tutor.user.firstName} ${course.tutor.user.lastName}` : 'Unassigned';
+                        const price = course.price ? '$' + parseFloat(course.price).toFixed(2) : 'Free';
+                        const status = course.isPublished ? '<span class="badge bg-success">Published</span>' : '<span class="badge bg-warning">Draft</span>';
+                        const students = course.enrolledStudents || 0;
+                        
+                        html += `
+                            <tr data-course-id="${course.id}">
+                                <td>${course.id}</td>
+                                <td>${course.title || 'Untitled'}</td>
+                                <td>${instructor}</td>
+                                <td>${course.category || 'General'}</td>
+                                <td>${price}</td>
+                                <td>${students}</td>
+                                <td>${status}</td>
+                                <td>
+                                    <button class="btn btn-sm btn-info px-2 py-1" data-bs-toggle="modal" data-bs-target="#editCourseModal" data-course-id="${course.id}" style="font-size: 0.7rem;">
+                                        <i class="icofont-edit"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-danger px-2 py-1" onclick="deleteCourse(${course.id})" style="font-size: 0.7rem;">
+                                        <i class="icofont-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                    
+                    tbody.html(html);
+                } else {
+                    tbody.html('<tr><td colspan="8" class="text-center text-muted">Failed to load courses</td></tr>');
+                }
+            } catch (error) {
+                console.error('Error loading courses:', error);
+                $('#coursesTable tbody').html(`<tr><td colspan="8" class="text-center text-danger">Error loading courses: ${error.message || 'Unknown error'}</td></tr>`);
             }
         }
         
-        function saveCourse() {
-            alert('Course added successfully!');
-            $('#addCourseModal').modal('hide');
+        // Load tutors for instructor dropdown
+        async function loadTutors() {
+            try {
+                if (typeof API === 'undefined' || typeof API.tutor === 'undefined') {
+                    return;
+                }
+                
+                const response = await API.tutor.getAll();
+                const select = $('#addCourseForm select').last(); // Last select is instructor
+                const editSelect = $('#editCourseForm select').last();
+                
+                if (response.success && response.data) {
+                    const tutors = response.data.tutors || response.data || [];
+                    let options = '<option value="">Select Instructor</option>';
+                    
+                    tutors.forEach(tutor => {
+                        const name = tutor.user ? `${tutor.user.firstName} ${tutor.user.lastName}` : 'Unknown';
+                        options += `<option value="${tutor.id}">${name}</option>`;
+                    });
+                    
+                    select.html(options);
+                    editSelect.html(options);
+                }
+            } catch (error) {
+                console.error('Error loading tutors:', error);
+            }
         }
         
-        function updateCourse() {
-            alert('Course updated successfully!');
-            $('#editCourseModal').modal('hide');
+        // Save new course
+        async function saveCourse() {
+            try {
+                if (typeof API === 'undefined' || typeof API.course === 'undefined') {
+                    showMessage('API not loaded. Please refresh the page.', 'error');
+                    return;
+                }
+                
+                const form = $('#addCourseForm');
+                const title = form.find('input[type="text"]').first().val();
+                const description = form.find('textarea').val();
+                const category = form.find('select').first().val();
+                const price = form.find('input[type="number"]').val();
+                const tutorId = form.find('select').last().val();
+                
+                if (!title || !description) {
+                    showMessage('Please fill in all required fields', 'error');
+                    return;
+                }
+                
+                const courseData = {
+                    title: title.trim(),
+                    description: description.trim(),
+                    category: category || 'General',
+                    price: price ? parseFloat(price) : 0,
+                    tutorId: tutorId ? parseInt(tutorId) : null,
+                    isPublished: true,
+                    isActive: true
+                };
+                
+                console.log('Creating course:', courseData);
+                const response = await API.course.create(courseData);
+                
+                if (response.success) {
+                    showMessage('Course created successfully!');
+                    $('#addCourseModal').modal('hide');
+                    form[0].reset();
+                    loadCourses(); // Refresh the list
+                } else {
+                    showMessage(response.message || 'Failed to create course', 'error');
+                }
+            } catch (error) {
+                console.error('Error creating course:', error);
+                showMessage(error.message || 'Failed to create course. Please try again.', 'error');
+            }
         }
+        
+        // Update course
+        async function updateCourse() {
+            if (!currentEditCourseId) {
+                showMessage('Course ID not found for update', 'error');
+                return;
+            }
+            
+            try {
+                if (typeof API === 'undefined' || typeof API.course === 'undefined') {
+                    showMessage('API not loaded. Please refresh the page.', 'error');
+                    return;
+                }
+                
+                const form = $('#editCourseForm');
+                const title = form.find('input[type="text"]').first().val();
+                const description = form.find('textarea').val();
+                const category = form.find('select').first().val();
+                const price = form.find('input[type="number"]').val();
+                
+                if (!title || !description) {
+                    showMessage('Please fill in all required fields', 'error');
+                    return;
+                }
+                
+                const courseData = {
+                    title: title.trim(),
+                    description: description.trim(),
+                    category: category || 'General',
+                    price: price ? parseFloat(price) : 0
+                };
+                
+                const response = await API.course.update(currentEditCourseId, courseData);
+                
+                if (response.success) {
+                    showMessage('Course updated successfully!');
+                    $('#editCourseModal').modal('hide');
+                    loadCourses(); // Refresh the list
+                } else {
+                    showMessage(response.message || 'Failed to update course', 'error');
+                }
+            } catch (error) {
+                console.error('Error updating course:', error);
+                showMessage(error.message || 'Failed to update course. Please try again.', 'error');
+            }
+        }
+        
+        // Delete course
+        async function deleteCourse(id) {
+            if (!confirm('Are you sure you want to delete this course? This action cannot be undone.')) {
+                return;
+            }
+            
+            try {
+                if (typeof API === 'undefined' || typeof API.course === 'undefined') {
+                    showMessage('API not loaded. Please refresh the page.', 'error');
+                    return;
+                }
+                
+                const response = await API.course.delete(id);
+                
+                if (response.success) {
+                    showMessage('Course deleted successfully!');
+                    $(`tr[data-course-id="${id}"]`).fadeOut(300, function() {
+                        $(this).remove();
+                        if ($('#coursesTable tbody tr').length === 0) {
+                            loadCourses();
+                        }
+                    });
+                } else {
+                    showMessage(response.message || 'Failed to delete course', 'error');
+                }
+            } catch (error) {
+                console.error('Error deleting course:', error);
+                showMessage(error.message || 'Failed to delete course. Please try again.', 'error');
+            }
+        }
+        
+        // Set edit course ID when edit modal opens
+        $(document).on('click', '[data-bs-target="#editCourseModal"]', async function() {
+            const courseId = $(this).data('course-id');
+            currentEditCourseId = courseId;
+            
+            try {
+                const response = await API.course.getById(courseId);
+                if (response.success && response.data) {
+                    const course = response.data.course;
+                    const form = $('#editCourseForm');
+                    form.find('input[type="text"]').first().val(course.title);
+                    form.find('textarea').val(course.description);
+                    form.find('select').first().val(course.category);
+                    form.find('input[type="number"]').val(course.price);
+                } else {
+                    showMessage(response.message || 'Failed to load course for editing', 'error');
+                }
+            } catch (error) {
+                console.error('Error loading course for edit:', error);
+                showMessage(error.message || 'Failed to load course for editing. Please try again.', 'error');
+            }
+        });
+        
+        // Load courses and tutors on page load
+        $(document).ready(function() {
+            if (typeof jQuery === 'undefined') {
+                setTimeout(function() {
+                    if (typeof jQuery !== 'undefined') {
+                        loadCourses();
+                        loadTutors();
+                    }
+                }, 1000);
+            } else {
+                loadCourses();
+                loadTutors();
+            }
+        });
     </script>
 
 </body>
