@@ -634,7 +634,9 @@
             submitBtn.prop('disabled', true).text('Logging in...');
             
             try {
+                console.log('Attempting login for:', email);
                 const response = await API.auth.login(email, password);
+                console.log('Login response received:', response);
                 
                 // Check if response is valid
                 if (!response) {
@@ -646,8 +648,15 @@
                 const user = responseData?.user || responseData;
                 const token = responseData?.token || response.token;
                 
+                console.log('Extracted user:', user);
+                console.log('Extracted token:', token ? 'Token received' : 'No token');
+                
                 if (!token) {
                     throw new Error('Authentication token not received');
+                }
+                
+                if (!user) {
+                    throw new Error('User data not received');
                 }
                 
                 // Store token and user data
@@ -676,9 +685,13 @@
                 // Determine redirect URL based on user role
                 let redirectUrl = 'index.html'; // Default redirect
                 
+                console.log('User roles:', user.roles);
+                
                 if (user && user.roles && Array.isArray(user.roles) && user.roles.length > 0) {
                     const roleName = user.roles[0].name ? user.roles[0].name.toLowerCase() : 
-                                   (user.roles[0].toLowerCase ? user.roles[0].toLowerCase() : '');
+                                   (typeof user.roles[0] === 'string' ? user.roles[0].toLowerCase() : '');
+                    
+                    console.log('Detected role:', roleName);
                     
                     if (roleName === 'super_admin' || roleName === 'admin') {
                         redirectUrl = 'super-admin-dashboard.html';
@@ -692,12 +705,17 @@
                 } else if (user && user.role) {
                     // Handle case where role is a string property
                     const roleName = user.role.toLowerCase();
+                    console.log('Detected role (string):', roleName);
                     if (roleName === 'super_admin' || roleName === 'admin') {
                         redirectUrl = 'super-admin-dashboard.html';
                     } else if (roleName === 'tutor' || roleName === 'staff') {
                         redirectUrl = 'staff-dashboard.html';
                     }
+                } else {
+                    console.log('No role detected, using default redirect');
                 }
+                
+                console.log('Redirecting to:', redirectUrl);
                 
                 // Redirect after short delay
                 setTimeout(() => {
@@ -706,6 +724,11 @@
                 
             } catch (error) {
                 console.error('Login error:', error);
+                console.error('Error details:', {
+                    message: error.message,
+                    stack: error.stack,
+                    name: error.name
+                });
                 
                 let errorMessage = 'Login failed. Please check your credentials and try again.';
                 

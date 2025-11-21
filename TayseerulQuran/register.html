@@ -669,32 +669,76 @@
             };
             
             try {
+                console.log('Attempting registration for:', userData.email);
                 const response = await API.auth.register(userData);
+                console.log('Register response received:', response);
                 
-                if (response.success) {
-                    // Store token and user data
-                    API.config.setAuthToken(response.data.token);
-                    API.config.setUser(response.data.user);
-                    
-                    // Show success message
-                    messageDiv.addClass('success')
-                        .css('background-color', '#d4edda')
-                        .css('color', '#155724')
-                        .css('border', '1px solid #c3e6cb')
-                        .text('Registration successful! Redirecting...')
-                        .show();
-                    
-                    // Redirect to home page
-                    setTimeout(() => {
-                        window.location.href = 'index.html';
-                    }, 1500);
+                // Handle both response formats
+                const responseData = response.success ? response.data : response;
+                const user = responseData?.user || responseData;
+                const token = responseData?.token || response.token;
+                
+                console.log('Extracted user:', user);
+                console.log('Extracted token:', token ? 'Token received' : 'No token');
+                
+                if (!token) {
+                    throw new Error('Registration token not received');
                 }
+                
+                if (!user) {
+                    throw new Error('User data not received');
+                }
+                
+                // Store token and user data
+                if (API.config && API.config.setAuthToken) {
+                    API.config.setAuthToken(token);
+                } else {
+                    localStorage.setItem('authToken', token);
+                }
+                
+                if (user) {
+                    if (API.config && API.config.setUser) {
+                        API.config.setUser(user);
+                    } else {
+                        localStorage.setItem('user', JSON.stringify(user));
+                    }
+                }
+                
+                // Show success message
+                messageDiv.addClass('success')
+                    .css('background-color', '#d4edda')
+                    .css('color', '#155724')
+                    .css('border', '1px solid #c3e6cb')
+                    .text('Registration successful! Redirecting...')
+                    .show();
+                
+                // Redirect to home page (new users are students by default)
+                console.log('Redirecting to index.html');
+                setTimeout(() => {
+                    window.location.href = 'index.html';
+                }, 1500);
+                
             } catch (error) {
+                console.error('Registration error:', error);
+                console.error('Error details:', {
+                    message: error.message,
+                    stack: error.stack,
+                    name: error.name
+                });
+                
+                let errorMessage = 'Registration failed. Please try again.';
+                
+                if (error.message) {
+                    errorMessage = error.message;
+                } else if (typeof error === 'string') {
+                    errorMessage = error;
+                }
+                
                 messageDiv.addClass('error')
                     .css('background-color', '#f8d7da')
                     .css('color', '#721c24')
                     .css('border', '1px solid #f5c6cb')
-                    .text(error.message || 'Registration failed. Please try again.')
+                    .text(errorMessage)
                     .show();
                 
                 submitBtn.prop('disabled', false).text(originalText);
