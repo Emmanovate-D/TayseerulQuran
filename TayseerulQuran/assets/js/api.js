@@ -152,10 +152,23 @@ const userAPI = {
     return await apiRequest(`/users/${id}`, { method: 'GET' });
   },
   
+  create: async (userData) => {
+    return await apiRequest('/users', {
+      method: 'POST',
+      body: userData,
+    });
+  },
+  
   update: async (id, userData) => {
     return await apiRequest(`/users/${id}`, {
       method: 'PUT',
       body: userData,
+    });
+  },
+  
+  delete: async (id) => {
+    return await apiRequest(`/users/${id}`, {
+      method: 'DELETE',
     });
   }
 };
@@ -220,6 +233,17 @@ const blogAPI = {
   }
 };
 
+// Role API
+const roleAPI = {
+  getAll: async () => {
+    return await apiRequest('/admin/roles', { method: 'GET' });
+  },
+  
+  getById: async (id) => {
+    return await apiRequest(`/admin/roles/${id}`, { method: 'GET' });
+  }
+};
+
 // Export for use in other scripts
 window.API = {
   auth: authAPI,
@@ -228,6 +252,7 @@ window.API = {
   student: studentAPI,
   tutor: tutorAPI,
   blog: blogAPI,
+  role: roleAPI,
   config: API_CONFIG
 };
 
