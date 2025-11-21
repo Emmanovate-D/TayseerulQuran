@@ -109,55 +109,12 @@
                                                 <th>Actions</th>
                                             </tr>
                                         </thead>
-                                        <tbody>
+                                        <tbody id="adminsTableBody">
                                             <tr>
-                                                <td>
-                                                    <div class="d-flex align-items-center">
-                                                        <img src="assets/images/author/author-09.jpg" class="rounded-circle me-2" width="40" height="40" alt="">
-                                                        <strong>Michael Chen</strong>
+                                                <td colspan="6" class="text-center">
+                                                    <div class="spinner-border text-primary" role="status">
+                                                        <span class="visually-hidden">Loading...</span>
                                                     </div>
-                                                </td>
-                                                <td>michael.chen@example.com</td>
-                                                <td><span class="badge bg-info">Admin</span></td>
-                                                <td>
-                                                    <span class="badge bg-secondary">12 permissions</span>
-                                                </td>
-                                                <td><span class="badge bg-success">Active</span></td>
-                                                <td>
-                                                    <button class="btn btn-sm btn-info px-2 py-1 small" data-bs-toggle="modal" data-bs-target="#editPermissionsModal" data-permission="assign_permissions" style="font-size: 0.7rem;">
-                                                        <i class="icofont-settings me-1"></i> Permissions
-                                                    </button>
-                                                    <button class="btn btn-sm btn-warning px-2 py-1" data-bs-toggle="modal" data-bs-target="#editAdminModal" data-permission="edit_admin" style="font-size: 0.7rem;">
-                                                        <i class="icofont-edit"></i>
-                                                    </button>
-                                                    <button class="btn btn-sm btn-danger px-2 py-1" onclick="deleteAdmin(1)" data-admin-id="1" data-permission="delete_admin" style="font-size: 0.7rem;">
-                                                        <i class="icofont-trash"></i>
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <td>
-                                                    <div class="d-flex align-items-center">
-                                                        <img src="assets/images/author/author-10.jpg" class="rounded-circle me-2" width="40" height="40" alt="">
-                                                        <strong>Lisa Anderson</strong>
-                                                    </div>
-                                                </td>
-                                                <td>lisa.anderson@example.com</td>
-                                                <td><span class="badge bg-info">Admin</span></td>
-                                                <td>
-                                                    <span class="badge bg-secondary">8 permissions</span>
-                                                </td>
-                                                <td><span class="badge bg-success">Active</span></td>
-                                                <td>
-                                                    <button class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#editPermissionsModal" data-permission="assign_permissions">
-                                                        <i class="icofont-settings"></i> Permissions
-                                                    </button>
-                                                    <button class="btn btn-sm btn-warning" data-bs-toggle="modal" data-bs-target="#editAdminModal" data-permission="edit_admin">
-                                                        <i class="icofont-edit"></i>
-                                                    </button>
-                                                    <button class="btn btn-sm btn-danger" onclick="deleteAdmin(2)" data-admin-id="2" data-permission="delete_admin">
-                                                        <i class="icofont-trash"></i>
-                                                    </button>
                                                 </td>
                                             </tr>
                                         </tbody>
@@ -385,6 +342,80 @@
         
         let adminRoleId = null;
         
+        // Load admins from API
+        async function loadAdmins() {
+            try {
+                if (typeof API === 'undefined') {
+                    console.error('API not loaded');
+                    return;
+                }
+                
+                const response = await API.user.getAll();
+                const tbody = $('#adminsTableBody');
+                
+                if (response.success && response.data && response.data.users) {
+                    const users = response.data.users;
+                    
+                    // Filter to show only admins (users with admin role)
+                    const admins = users.filter(user => {
+                        if (user.roles && Array.isArray(user.roles)) {
+                            return user.roles.some(role => role.name === 'admin' || role.name === 'super_admin');
+                        }
+                        return false;
+                    });
+                    
+                    if (admins.length === 0) {
+                        tbody.html('<tr><td colspan="6" class="text-center text-muted">No admins found. Create your first admin!</td></tr>');
+                        return;
+                    }
+                    
+                    let html = '';
+                    admins.forEach(admin => {
+                        const fullName = `${admin.firstName || ''} ${admin.lastName || ''}`.trim() || 'Unknown';
+                        const roleNames = admin.roles ? admin.roles.map(r => r.name).join(', ') : 'No role';
+                        const roleBadge = admin.roles && admin.roles.some(r => r.name === 'super_admin') 
+                            ? '<span class="badge bg-danger">Super Admin</span>' 
+                            : '<span class="badge bg-info">Admin</span>';
+                        const permissionCount = admin.permissions ? admin.permissions.length : 0;
+                        const status = admin.isActive ? '<span class="badge bg-success">Active</span>' : '<span class="badge bg-secondary">Inactive</span>';
+                        
+                        html += `
+                            <tr data-admin-id="${admin.id}">
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <img src="${admin.profileImage || 'assets/images/author/author-09.jpg'}" class="rounded-circle me-2" width="40" height="40" alt="">
+                                        <strong>${fullName}</strong>
+                                    </div>
+                                </td>
+                                <td>${admin.email || 'N/A'}</td>
+                                <td>${roleBadge}</td>
+                                <td><span class="badge bg-secondary">${permissionCount} permissions</span></td>
+                                <td>${status}</td>
+                                <td>
+                                    <button class="btn btn-sm btn-info px-2 py-1 small" data-bs-toggle="modal" data-bs-target="#editPermissionsModal" data-admin-id="${admin.id}" data-permission="assign_permissions" style="font-size: 0.7rem;">
+                                        <i class="icofont-settings me-1"></i> Permissions
+                                    </button>
+                                    <button class="btn btn-sm btn-warning px-2 py-1" data-bs-toggle="modal" data-bs-target="#editAdminModal" data-admin-id="${admin.id}" data-permission="edit_admin" style="font-size: 0.7rem;">
+                                        <i class="icofont-edit"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-danger px-2 py-1" onclick="deleteAdmin(${admin.id})" data-admin-id="${admin.id}" data-permission="delete_admin" style="font-size: 0.7rem;">
+                                        <i class="icofont-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                    
+                    tbody.html(html);
+                } else {
+                    tbody.html('<tr><td colspan="6" class="text-center text-muted">Failed to load admins</td></tr>');
+                }
+            } catch (error) {
+                console.error('Error loading admins:', error);
+                $('#adminsTableBody').html('<tr><td colspan="6" class="text-center text-danger">Error loading admins. Please refresh the page.</td></tr>');
+            }
+        }
+        
         // Load roles on page load to get admin role ID
         $(document).ready(async function() {
             try {
@@ -398,6 +429,9 @@
             } catch (error) {
                 console.error('Error loading roles:', error);
             }
+            
+            // Load admins
+            loadAdmins();
         });
         
         // Show success/error message
@@ -475,7 +509,8 @@
                     showMessage('Admin created successfully!');
                     $('#createAdminModal').modal('hide');
                     form[0].reset();
-                    setTimeout(() => location.reload(), 1500);
+                    // Reload the table instead of full page reload
+                    await loadAdmins();
                 } else {
                     showMessage(response.message || 'Failed to create admin', 'error');
                 }
@@ -517,7 +552,14 @@
                 
                 if (response.success) {
                     showMessage('Admin deleted successfully!');
-                    setTimeout(() => location.reload(), 1500);
+                    // Remove row from table immediately
+                    $(`tr[data-admin-id="${id}"]`).fadeOut(300, function() {
+                        $(this).remove();
+                        // Reload if table is empty
+                        if ($('#adminsTableBody tr').length === 0) {
+                            loadAdmins();
+                        }
+                    });
                 } else {
                     showMessage(response.message || 'Failed to delete admin', 'error');
                 }

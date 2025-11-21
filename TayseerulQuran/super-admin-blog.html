@@ -107,7 +107,15 @@
                                                 <th>Actions</th>
                                             </tr>
                                         </thead>
-                                        <tbody>
+                                        <tbody id="blogPostsTableBody">
+                                            <tr>
+                                                <td colspan="7" class="text-center">
+                                                    <div class="spinner-border text-primary" role="status">
+                                                        <span class="visually-hidden">Loading...</span>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        </tbody>
                                             <tr>
                                                 <td>
                                                     <div class="d-flex align-items-center">
@@ -392,7 +400,8 @@
                     showMessage('Blog post published successfully!');
                     $('#createPostModal').modal('hide');
                     form[0].reset();
-                    setTimeout(() => location.reload(), 1500);
+                    // Reload the table instead of full page reload
+                    await loadBlogPosts();
                 } else {
                     showMessage(response.message || 'Failed to create blog post', 'error');
                 }
@@ -431,7 +440,8 @@
                 if (response.success) {
                     showMessage('Blog post updated successfully!');
                     $('#editPostModal').modal('hide');
-                    setTimeout(() => location.reload(), 1500);
+                    // Reload the table instead of full page reload
+                    await loadBlogPosts();
                 } else {
                     showMessage(response.message || 'Failed to update blog post', 'error');
                 }
@@ -458,7 +468,14 @@
                 
                 if (response.success) {
                     showMessage('Blog post deleted successfully!');
-                    setTimeout(() => location.reload(), 1500);
+                    // Remove row from table immediately
+                    $(`tr[data-post-id="${id}"]`).fadeOut(300, function() {
+                        $(this).remove();
+                        // Reload if table is empty
+                        if ($('#blogPostsTableBody tr').length === 0) {
+                            loadBlogPosts();
+                        }
+                    });
                 } else {
                     showMessage(response.message || 'Failed to delete blog post', 'error');
                 }
@@ -468,13 +485,100 @@
             }
         }
         
+        // Load blog posts from API
+        async function loadBlogPosts() {
+            try {
+                if (typeof API === 'undefined') {
+                    console.error('API not loaded');
+                    return;
+                }
+                
+                const response = await API.blog.getAll();
+                const tbody = $('#blogPostsTableBody');
+                
+                if (response.success && response.data && response.data.posts) {
+                    const posts = response.data.posts;
+                    
+                    if (posts.length === 0) {
+                        tbody.html('<tr><td colspan="7" class="text-center text-muted">No blog posts found. Create your first post!</td></tr>');
+                        return;
+                    }
+                    
+                    let html = '';
+                    posts.forEach(post => {
+                        const author = post.author ? `${post.author.firstName} ${post.author.lastName}` : 'Unknown';
+                        const publishedDate = post.publishedAt ? new Date(post.publishedAt).toLocaleDateString() : 'Draft';
+                        const status = post.isPublished ? '<span class="badge bg-success">Published</span>' : '<span class="badge bg-warning">Draft</span>';
+                        
+                        html += `
+                            <tr data-post-id="${post.id}">
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <img src="${post.featuredImage || 'assets/images/blog/blog-01.jpg'}" class="me-3" width="60" height="60" style="object-fit: cover; border-radius: 5px;" alt="">
+                                        <div>
+                                            <strong>${post.title || 'Untitled'}</strong>
+                                            <br><small class="text-muted">${(post.excerpt || post.content || '').substring(0, 50)}...</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>${author}</td>
+                                <td>${post.category || 'General'}</td>
+                                <td>${publishedDate}</td>
+                                <td>${post.views || 0}</td>
+                                <td>${status}</td>
+                                <td>
+                                    <button class="btn btn-sm btn-info px-2 py-1" data-bs-toggle="modal" data-bs-target="#viewPostModal" data-post-id="${post.id}" style="font-size: 0.7rem;">
+                                        <i class="icofont-eye"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-warning px-2 py-1" data-bs-toggle="modal" data-bs-target="#editPostModal" data-post-id="${post.id}" data-permission="edit_blog_post" style="font-size: 0.7rem;">
+                                        <i class="icofont-edit"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-danger px-2 py-1" onclick="deletePost(${post.id})" data-post-id="${post.id}" data-permission="delete_blog_post" style="font-size: 0.7rem;">
+                                        <i class="icofont-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                    
+                    tbody.html(html);
+                } else {
+                    tbody.html('<tr><td colspan="7" class="text-center text-muted">Failed to load blog posts</td></tr>');
+                }
+            } catch (error) {
+                console.error('Error loading blog posts:', error);
+                $('#blogPostsTableBody').html('<tr><td colspan="7" class="text-center text-danger">Error loading blog posts. Please refresh the page.</td></tr>');
+            }
+        }
+        
         // Set edit post ID when edit modal opens
         $(document).on('click', '[data-bs-target="#editPostModal"]', function() {
-            const postId = $(this).data('post-id') || 1;
+            const postId = $(this).data('post-id');
             currentEditPostId = postId;
             
-            // Load post data into form (if available)
-            // This would ideally fetch from API, but for now we'll use existing form values
+            // Load post data into form
+            loadPostData(postId);
+        });
+        
+        // Load post data for editing
+        async function loadPostData(postId) {
+            try {
+                const response = await API.blog.getById(postId);
+                if (response.success && response.data && response.data.post) {
+                    const post = response.data.post;
+                    const form = $('#editPostModal form');
+                    form.find('input[type="text"]').first().val(post.title || '');
+                    form.find('select').val(post.category || '');
+                    form.find('textarea').val(post.content || '');
+                }
+            } catch (error) {
+                console.error('Error loading post data:', error);
+            }
+        }
+        
+        // Load posts on page load
+        $(document).ready(function() {
+            loadBlogPosts();
         });
     </script>
 
