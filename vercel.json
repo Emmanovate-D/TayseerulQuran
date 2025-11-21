@@ -1,18 +1,6 @@
 {
   "version": 2,
-  "buildCommand": null,
-  "outputDirectory": "TayseerulQuran",
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "/TayseerulQuran/$1"
-    }
-  ],
-  "rewrites": [
-    {
-      "source": "/(.*)",
-      "destination": "/TayseerulQuran/$1"
-    }
-  ]
+  "cleanUrls": true,
+  "trailingSlash": false
 }
 
