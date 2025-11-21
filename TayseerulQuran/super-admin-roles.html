@@ -368,12 +368,19 @@
             document.write('<script src="assets/js/vendor/jquery-3.5.1.min.js"><\/script>');
         }
     </script>
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz" crossorigin="anonymous"></script>
     <script src="assets/js/vendor/modernizr-3.11.2.min.js"></script>
     <script src="assets/js/plugins.min.js"></script>
     <script src="assets/js/main.js"></script>
     <script src="assets/js/api.js"></script>
     <script src="assets/js/role-access-control.js"></script>
     <script>
+        // Debug: Check if required libraries are loaded
+        console.log('jQuery loaded:', typeof jQuery !== 'undefined');
+        console.log('API loaded:', typeof API !== 'undefined');
+        console.log('Bootstrap loaded:', typeof bootstrap !== 'undefined');
+        
         localStorage.setItem('userRole', 'super_admin');
         
         let adminRoleId = null;
@@ -405,8 +412,20 @@
         }
         
         async function createAdmin() {
+            console.log('createAdmin() called');
             try {
+                if (typeof API === 'undefined') {
+                    showMessage('API not loaded. Please refresh the page.', 'error');
+                    console.error('API is not defined');
+                    return;
+                }
+                
                 const form = $('#createAdminModal form');
+                if (form.length === 0) {
+                    showMessage('Form not found', 'error');
+                    console.error('Form not found');
+                    return;
+                }
                 const fullName = form.find('input[type="text"]').first().val();
                 const email = form.find('input[type="email"]').val();
                 const password = form.find('input[type="password"]').val();
@@ -482,11 +501,18 @@
         }
         
         async function deleteAdmin(id) {
+            console.log('deleteAdmin() called with id:', id);
             if (!confirm('Are you sure you want to delete this admin? This action cannot be undone.')) {
                 return;
             }
             
             try {
+                if (typeof API === 'undefined') {
+                    showMessage('API not loaded. Please refresh the page.', 'error');
+                    console.error('API is not defined');
+                    return;
+                }
+                
                 const response = await API.user.delete(id);
                 
                 if (response.success) {
