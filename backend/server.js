@@ -87,15 +87,24 @@ const startServer = async () => {
       console.log('🔄 Syncing database models...');
       await sequelize.sync({ alter: false });
       
-      // Explicitly ensure junction tables exist (they might not be created by sync)
-      const { UserRole, RolePermission, StudentCourse } = require('./models');
+      // Explicitly ensure all tables exist (they might not be created by sync)
+      const { UserRole, RolePermission, StudentCourse, BlogPost, Course, Payment, Student, Tutor } = require('./models');
       try {
+        // Sync junction tables
         await UserRole.sync({ alter: false });
         await RolePermission.sync({ alter: false });
         await StudentCourse.sync({ alter: false });
         console.log('✅ Junction tables verified');
-      } catch (junctionError) {
-        console.error('⚠️  Junction table sync warning:', junctionError.message);
+        
+        // Sync main tables
+        await BlogPost.sync({ alter: false });
+        await Course.sync({ alter: false });
+        await Payment.sync({ alter: false });
+        await Student.sync({ alter: false });
+        await Tutor.sync({ alter: false });
+        console.log('✅ Main tables verified');
+      } catch (tableError) {
+        console.error('⚠️  Table sync warning:', tableError.message);
       }
       
       console.log('✅ Database tables synchronized');
