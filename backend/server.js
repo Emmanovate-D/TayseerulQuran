@@ -27,6 +27,11 @@ app.use(cors({
     // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
     
+    // Always allow Vercel and Render domains
+    if (origin.includes('vercel.app') || origin.includes('onrender.com')) {
+      return callback(null, true);
+    }
+    
     if (allowedOrigins.indexOf(origin) !== -1 || allowedOrigins.includes('*')) {
       callback(null, true);
     } else {
@@ -34,6 +39,8 @@ app.use(cors({
       if (env.NODE_ENV === 'development') {
         callback(null, true);
       } else {
+        // In production, log the blocked origin for debugging
+        console.log(`⚠️  CORS blocked origin: ${origin}`);
         callback(new Error('Not allowed by CORS'));
       }
     }

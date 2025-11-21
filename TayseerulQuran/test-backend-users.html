@@ -51,10 +51,26 @@
         
         async function testHealth() {
             const resultDiv = document.getElementById('healthResult');
-            resultDiv.innerHTML = '<p>Testing...</p>';
+            resultDiv.innerHTML = '<p>Testing... (This may take 30-60 seconds if Render service is sleeping)</p>';
             
             try {
-                const response = await fetch(`${API_BASE}/`);
+                // Add timeout for Render free tier (can take up to 60s to wake up)
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 90000); // 90 second timeout
+                
+                const response = await fetch(`${API_BASE}/`, {
+                    signal: controller.signal,
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
+                
+                clearTimeout(timeoutId);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
                 const data = await response.json();
                 
                 resultDiv.innerHTML = `
@@ -64,11 +80,30 @@
                     </div>
                 `;
             } catch (error) {
+                let errorMessage = error.message;
+                let additionalInfo = '';
+                
+                if (error.name === 'AbortError') {
+                    errorMessage = 'Request timed out (90 seconds)';
+                    additionalInfo = '<p><strong>⚠️ Render Free Tier:</strong> Services sleep after 15 minutes of inactivity. The first request can take 30-60 seconds to wake up. Try again in a moment.</p>';
+                } else if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+                    additionalInfo = `
+                        <p><strong>Possible causes:</strong></p>
+                        <ul>
+                            <li>Render service is sleeping (free tier) - wait 30-60 seconds and try again</li>
+                            <li>CORS issue - check if Vercel domain is allowed</li>
+                            <li>Service is down - check Render dashboard</li>
+                        </ul>
+                        <p><a href="https://dashboard.render.com" target="_blank">Check Render Dashboard</a></p>
+                    `;
+                }
+                
                 resultDiv.innerHTML = `
                     <div class="error">
                         <h3>❌ Backend Not Responding</h3>
-                        <p>Error: ${error.message}</p>
-                        <p>Check if Render service is running.</p>
+                        <p><strong>Error:</strong> ${errorMessage}</p>
+                        ${additionalInfo}
+                        <p><button onclick="testHealth()" style="margin-top: 10px;">Retry Test</button></p>
                     </div>
                 `;
             }
@@ -120,9 +155,18 @@
                 }
             } catch (error) {
                 testDiv.className = 'test-section error';
+                let errorMsg = error.message;
+                let additionalInfo = '';
+                
+                if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+                    errorMsg = 'Network error - Backend may be sleeping';
+                    additionalInfo = '<p><em>Render free tier services sleep after inactivity. First request may take 30-60 seconds.</em></p>';
+                }
+                
                 testDiv.innerHTML = `
                     <h3>❌ ${roleName} - Error</h3>
-                    <p>Error: ${error.message}</p>
+                    <p><strong>Error:</strong> ${errorMsg}</p>
+                    ${additionalInfo}
                 `;
             }
         }
