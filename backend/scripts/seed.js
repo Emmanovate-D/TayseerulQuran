@@ -1,4 +1,4 @@
-const { User, Role, UserRole, Permission, RolePermission } = require('../models');
+const { User, Role, UserRole, Permission, RolePermission, sequelize } = require('../models');
 const { ROLES, PERMISSIONS } = require('../utils/constants');
 
 /**
@@ -8,6 +8,33 @@ const { ROLES, PERMISSIONS } = require('../utils/constants');
 const seedDatabase = async () => {
   try {
     console.log('🌱 Starting database seeding...');
+
+    // Ensure UserRole table exists (junction table for many-to-many)
+    try {
+      await UserRole.sync({ alter: false });
+      console.log('✅ UserRole table verified');
+    } catch (syncError) {
+      console.error('⚠️  UserRole table sync warning:', syncError.message);
+      // Try to create table manually if sync fails
+      try {
+        await sequelize.query(`
+          CREATE TABLE IF NOT EXISTS user_roles (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            userId INT NOT NULL,
+            roleId INT NOT NULL,
+            createdAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            updatedAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            UNIQUE KEY unique_user_role (userId, roleId),
+            FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE,
+            FOREIGN KEY (roleId) REFERENCES roles(id) ON DELETE CASCADE
+          ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+        `);
+        console.log('✅ UserRole table created manually');
+      } catch (createError) {
+        console.error('❌ Failed to create UserRole table:', createError.message);
+        // Continue anyway - might already exist
+      }
+    }
 
     // Check if roles already exist
     const existingRoles = await Role.count();
@@ -88,10 +115,28 @@ const seedDatabase = async () => {
 
         // Assign role
         if (userData.role) {
-          await UserRole.create({
-            userId: user.id,
-            roleId: userData.role.id
-          });
+          try {
+            // Check if role assignment already exists
+            const existingAssignment = await UserRole.findOne({
+              where: {
+                userId: user.id,
+                roleId: userData.role.id
+              }
+            });
+
+            if (!existingAssignment) {
+              await UserRole.create({
+                userId: user.id,
+                roleId: userData.role.id
+              });
+              console.log(`   ✓ Assigned role: ${userData.role.name}`);
+            } else {
+              console.log(`   ⏭️  Role already assigned: ${userData.role.name}`);
+            }
+          } catch (roleError) {
+            console.error(`   ❌ Failed to assign role to ${userData.email}:`, roleError.message);
+            // Continue with next user
+          }
         }
 
         usersCreated++;
