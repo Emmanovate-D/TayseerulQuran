@@ -174,9 +174,15 @@ const deleteBlogPost = async (req, res) => {
   try {
     const { id } = req.params;
 
+    // Find post without filtering by isActive (to allow deleting already inactive posts)
     const post = await BlogPost.findByPk(id);
     if (!post) {
       return sendNotFound(res, 'Blog post not found');
+    }
+
+    // Check if already deleted
+    if (!post.isActive) {
+      return sendError(res, 'Blog post is already deleted', HTTP_STATUS.BAD_REQUEST);
     }
 
     // Soft delete
@@ -185,6 +191,7 @@ const deleteBlogPost = async (req, res) => {
 
     return sendSuccess(res, null, 'Blog post deleted successfully');
   } catch (error) {
+    console.error('Error deleting blog post:', error);
     return sendError(res, error.message, HTTP_STATUS.INTERNAL_SERVER_ERROR);
   }
 };

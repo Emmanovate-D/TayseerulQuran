@@ -452,7 +452,7 @@
         }
         
         async function deletePost(id) {
-            console.log('deletePost() called with id:', id);
+            console.log('deletePost() called with id:', id, 'type:', typeof id);
             if (!confirm('Are you sure you want to delete this blog post? This action cannot be undone.')) {
                 return;
             }
@@ -464,23 +464,40 @@
                     return;
                 }
                 
-                const response = await API.blog.delete(id);
+                // Ensure ID is a number
+                const postId = parseInt(id);
+                if (isNaN(postId)) {
+                    showMessage('Invalid blog post ID', 'error');
+                    console.error('Invalid ID:', id);
+                    return;
+                }
+                
+                console.log('Calling API.blog.delete with ID:', postId);
+                const response = await API.blog.delete(postId);
+                console.log('Delete response:', response);
                 
                 if (response.success) {
                     showMessage('Blog post deleted successfully!');
                     // Remove row from table immediately
-                    $(`tr[data-post-id="${id}"]`).fadeOut(300, function() {
+                    $(`tr[data-post-id="${postId}"]`).fadeOut(300, function() {
                         $(this).remove();
                         // Reload if table is empty
                         if ($('#blogPostsTableBody tr').length === 0) {
                             loadBlogPosts();
                         }
                     });
+                    // Reload the list to refresh
+                    setTimeout(() => loadBlogPosts(), 500);
                 } else {
                     showMessage(response.message || 'Failed to delete blog post', 'error');
                 }
             } catch (error) {
                 console.error('Error deleting post:', error);
+                console.error('Error details:', {
+                    message: error.message,
+                    stack: error.stack,
+                    name: error.name
+                });
                 showMessage(error.message || 'Failed to delete blog post. Please try again.', 'error');
             }
         }
