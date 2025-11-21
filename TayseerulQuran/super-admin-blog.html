@@ -490,14 +490,30 @@
             try {
                 if (typeof API === 'undefined') {
                     console.error('API not loaded');
+                    $('#blogPostsTableBody').html('<tr><td colspan="7" class="text-center text-danger">API not loaded. Please refresh the page.</td></tr>');
                     return;
                 }
                 
+                console.log('Loading blog posts from API...');
                 const response = await API.blog.getAll();
+                console.log('Blog API response:', response);
+                
                 const tbody = $('#blogPostsTableBody');
                 
-                if (response.success && response.data && response.data.posts) {
-                    const posts = response.data.posts;
+                // Handle different response formats
+                let posts = [];
+                if (response.success && response.data) {
+                    // Check if posts is in response.data.posts or response.data directly
+                    posts = response.data.posts || response.data || [];
+                } else if (Array.isArray(response)) {
+                    // If response is directly an array
+                    posts = response;
+                } else if (response.posts) {
+                    // If posts is at root level
+                    posts = response.posts;
+                }
+                
+                if (Array.isArray(posts) && posts.length > 0) {
                     
                     if (posts.length === 0) {
                         tbody.html('<tr><td colspan="7" class="text-center text-muted">No blog posts found. Create your first post!</td></tr>');
@@ -542,12 +558,20 @@
                     });
                     
                     tbody.html(html);
+                } else if (Array.isArray(posts) && posts.length === 0) {
+                    tbody.html('<tr><td colspan="7" class="text-center text-muted">No blog posts found. Create your first post!</td></tr>');
                 } else {
-                    tbody.html('<tr><td colspan="7" class="text-center text-muted">Failed to load blog posts</td></tr>');
+                    console.error('Unexpected response format:', response);
+                    tbody.html('<tr><td colspan="7" class="text-center text-warning">No posts found or unexpected response format. Check console for details.</td></tr>');
                 }
             } catch (error) {
                 console.error('Error loading blog posts:', error);
-                $('#blogPostsTableBody').html('<tr><td colspan="7" class="text-center text-danger">Error loading blog posts. Please refresh the page.</td></tr>');
+                console.error('Error details:', {
+                    message: error.message,
+                    stack: error.stack,
+                    name: error.name
+                });
+                $('#blogPostsTableBody').html(`<tr><td colspan="7" class="text-center text-danger">Error loading blog posts: ${error.message || 'Unknown error'}. Please check console and refresh the page.</td></tr>`);
             }
         }
         
