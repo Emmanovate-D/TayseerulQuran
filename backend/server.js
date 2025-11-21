@@ -97,11 +97,42 @@ const startServer = async () => {
         console.log('✅ Junction tables verified');
         
         // Sync main tables
-        await BlogPost.sync({ alter: false });
-        await Course.sync({ alter: false });
-        await Payment.sync({ alter: false });
-        await Student.sync({ alter: false });
-        await Tutor.sync({ alter: false });
+        console.log('🔄 Syncing main tables (BlogPost, Course, Payment, Student, Tutor)...');
+        try {
+          await BlogPost.sync({ alter: false });
+          console.log('✅ BlogPost table synced');
+        } catch (err) {
+          console.error('⚠️  BlogPost sync error:', err.message);
+        }
+        
+        try {
+          await Course.sync({ alter: false });
+          console.log('✅ Course table synced');
+        } catch (err) {
+          console.error('⚠️  Course sync error:', err.message);
+        }
+        
+        try {
+          await Payment.sync({ alter: false });
+          console.log('✅ Payment table synced');
+        } catch (err) {
+          console.error('⚠️  Payment sync error:', err.message);
+        }
+        
+        try {
+          await Student.sync({ alter: false });
+          console.log('✅ Student table synced');
+        } catch (err) {
+          console.error('⚠️  Student sync error:', err.message);
+        }
+        
+        try {
+          await Tutor.sync({ alter: false });
+          console.log('✅ Tutor table synced');
+        } catch (err) {
+          console.error('⚠️  Tutor sync error:', err.message);
+        }
+        
         console.log('✅ Main tables verified');
       } catch (tableError) {
         console.error('⚠️  Table sync warning:', tableError.message);
