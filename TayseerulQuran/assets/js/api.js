@@ -244,6 +244,36 @@ const roleAPI = {
   }
 };
 
+// Payment API
+const paymentAPI = {
+  getAll: async (params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    return await apiRequest(`/payments${queryString ? '?' + queryString : ''}`, { method: 'GET' });
+  },
+
+  getById: async (id) => {
+    return await apiRequest(`/payments/${id}`, { method: 'GET' });
+  },
+
+  create: async (paymentData) => {
+    return await apiRequest('/payments', {
+      method: 'POST',
+      body: paymentData,
+    });
+  },
+
+  update: async (id, paymentData) => {
+    return await apiRequest(`/payments/${id}`, {
+      method: 'PUT',
+      body: paymentData,
+    });
+  },
+
+  getUserPayments: async (userId) => {
+    return await apiRequest(`/payments/user/${userId}`, { method: 'GET' });
+  }
+};
+
 // Export for use in other scripts
 window.API = {
   auth: authAPI,
@@ -253,6 +283,7 @@ window.API = {
   tutor: tutorAPI,
   blog: blogAPI,
   role: roleAPI,
+  payment: paymentAPI,
   config: API_CONFIG
 };
 
