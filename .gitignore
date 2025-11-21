@@ -38,6 +38,8 @@ desktop.ini
 dist/
 build/
 *.min.js
+# Allow minified CSS in assets folder (needed for deployment)
+!TayseerulQuran/assets/**/*.min.css
 *.min.css
 
 # Temporary files
