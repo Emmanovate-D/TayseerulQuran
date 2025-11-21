@@ -100,6 +100,7 @@ const seedDatabase = async () => {
     ];
 
     let usersCreated = 0;
+    let rolesAssigned = 0;
     for (const userData of testUsers) {
       const existingUser = await User.findOne({ where: { email: userData.email } });
       
@@ -130,6 +131,7 @@ const seedDatabase = async () => {
                 roleId: userData.role.id
               });
               console.log(`   ✓ Assigned role: ${userData.role.name}`);
+              rolesAssigned++;
             } else {
               console.log(`   ⏭️  Role already assigned: ${userData.role.name}`);
             }
@@ -142,7 +144,32 @@ const seedDatabase = async () => {
         usersCreated++;
         console.log(`✅ Created user: ${userData.email} (${userData.role.name})`);
       } else {
-        console.log(`⏭️  User already exists: ${userData.email}`);
+        // User exists - check and assign role if missing
+        if (userData.role) {
+          try {
+            const existingAssignment = await UserRole.findOne({
+              where: {
+                userId: existingUser.id,
+                roleId: userData.role.id
+              }
+            });
+
+            if (!existingAssignment) {
+              await UserRole.create({
+                userId: existingUser.id,
+                roleId: userData.role.id
+              });
+              console.log(`✅ Assigned role to existing user: ${userData.email} → ${userData.role.name}`);
+              rolesAssigned++;
+            } else {
+              console.log(`⏭️  User already exists: ${userData.email} (role: ${userData.role.name})`);
+            }
+          } catch (roleError) {
+            console.error(`   ❌ Failed to assign role to ${userData.email}:`, roleError.message);
+          }
+        } else {
+          console.log(`⏭️  User already exists: ${userData.email}`);
+        }
       }
     }
 
@@ -150,6 +177,10 @@ const seedDatabase = async () => {
       console.log(`✅ Created ${usersCreated} test users`);
     } else {
       console.log('✅ All test users already exist');
+    }
+    
+    if (rolesAssigned > 0) {
+      console.log(`✅ Assigned ${rolesAssigned} roles to users`);
     }
 
     console.log('🎉 Database seeding completed successfully!');
