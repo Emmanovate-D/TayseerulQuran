@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Backend Users Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; max-width: 800px; margin: 0 auto; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        .info { background-color: #d1ecf1; border-color: #bee5eb; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; background: #007bff; color: white; border: none; border-radius: 3px; }
+        button:hover { background: #0056b3; }
+        pre { background: #f4f4f4; padding: 10px; border-radius: 5px; overflow-x: auto; font-size: 12px; }
+        h2 { margin-top: 0; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Backend Status Check</h1>
+    
+    <div class="test-section info">
+        <h2>Backend URL</h2>
+        <p><strong>API Base:</strong> https://tayseerulquran.onrender.com</p>
+        <p>This page tests if your backend is working and if test users exist.</p>
+    </div>
+
+    <div class="test-section">
+        <h2>1. Test Backend Health</h2>
+        <button onclick="testHealth()">Test Health Endpoint</button>
+        <div id="healthResult"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>2. Test User Login (Check if users exist)</h2>
+        <p>Test each role to see if users were created:</p>
+        <button onclick="testLogin('superadmin@tayseerulquran.com', 'SuperAdmin123!', 'Super Admin')">Test Super Admin</button>
+        <button onclick="testLogin('admin@tayseerulquran.com', 'Admin123!', 'Admin')">Test Admin</button>
+        <button onclick="testLogin('tutor@tayseerulquran.com', 'Tutor123!', 'Tutor')">Test Tutor</button>
+        <button onclick="testLogin('staff@tayseerulquran.com', 'Staff123!', 'Staff')">Test Staff</button>
+        <button onclick="testLogin('student@tayseerulquran.com', 'Student123!', 'Student')">Test Student</button>
+        <div id="loginResults"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>3. Check Render Deployment</h2>
+        <p>Go to: <a href="https://dashboard.render.com" target="_blank">Render Dashboard</a></p>
+        <p>Check your service logs for seed script messages.</p>
+    </div>
+
+    <script>
+        const API_BASE = 'https://tayseerulquran.onrender.com';
+        
+        async function testHealth() {
+            const resultDiv = document.getElementById('healthResult');
+            resultDiv.innerHTML = '<p>Testing... (This may take 30-60 seconds if Render service is sleeping)</p>';
+            
+            try {
+                // Add timeout for Render free tier (can take up to 60s to wake up)
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 90000); // 90 second timeout
+                
+                const response = await fetch(`${API_BASE}/`, {
+                    signal: controller.signal,
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
+                
+                clearTimeout(timeoutId);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                
+                resultDiv.innerHTML = `
+                    <div class="success">
+                        <h3>✅ Backend is Running!</h3>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    </div>
+                `;
+            } catch (error) {
+                let errorMessage = error.message;
+                let additionalInfo = '';
+                
+                if (error.name === 'AbortError') {
+                    errorMessage = 'Request timed out (90 seconds)';
+                    additionalInfo = '<p><strong>⚠️ Render Free Tier:</strong> Services sleep after 15 minutes of inactivity. The first request can take 30-60 seconds to wake up. Try again in a moment.</p>';
+                } else if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+                    additionalInfo = `
+                        <p><strong>Possible causes:</strong></p>
+                        <ul>
+                            <li>Render service is sleeping (free tier) - wait 30-60 seconds and try again</li>
+                            <li>CORS issue - check if Vercel domain is allowed</li>
+                            <li>Service is down - check Render dashboard</li>
+                        </ul>
+                        <p><a href="https://dashboard.render.com" target="_blank">Check Render Dashboard</a></p>
+                    `;
+                }
+                
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <h3>❌ Backend Not Responding</h3>
+                        <p><strong>Error:</strong> ${errorMessage}</p>
+                        ${additionalInfo}
+                        <p><button onclick="testHealth()" style="margin-top: 10px;">Retry Test</button></p>
+                    </div>
+                `;
+            }
+        }
+        
+        async function testLogin(email, password, roleName) {
+            const resultsDiv = document.getElementById('loginResults');
+            const testDiv = document.createElement('div');
+            testDiv.className = 'test-section';
+            testDiv.innerHTML = `<p>Testing ${roleName} login...</p>`;
+            resultsDiv.appendChild(testDiv);
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    const user = data.data?.user || data.user;
+                    const roles = user?.roles || [];
+                    const roleNames = roles.map(r => r.name || r).join(', ') || 'No roles';
+                    
+                    testDiv.className = 'test-section success';
+                    testDiv.innerHTML = `
+                        <h3>✅ ${roleName} - Login Successful!</h3>
+                        <p><strong>Email:</strong> ${email}</p>
+                        <p><strong>User ID:</strong> ${user?.id || 'N/A'}</p>
+                        <p><strong>Roles:</strong> ${roleNames}</p>
+                        <p><strong>Token:</strong> ${data.data?.token ? 'Received ✓' : 'Missing ✗'}</p>
+                        <details>
+                            <summary>Full Response</summary>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </details>
+                    `;
+                } else {
+                    testDiv.className = 'test-section error';
+                    testDiv.innerHTML = `
+                        <h3>❌ ${roleName} - Login Failed</h3>
+                        <p><strong>Status:</strong> ${response.status}</p>
+                        <p><strong>Message:</strong> ${data.message || 'Unknown error'}</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                }
+            } catch (error) {
+                testDiv.className = 'test-section error';
+                let errorMsg = error.message;
+                let additionalInfo = '';
+                
+                if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+                    errorMsg = 'Network error - Backend may be sleeping';
+                    additionalInfo = '<p><em>Render free tier services sleep after inactivity. First request may take 30-60 seconds.</em></p>';
+                }
+                
+                testDiv.innerHTML = `
+                    <h3>❌ ${roleName} - Error</h3>
+                    <p><strong>Error:</strong> ${errorMsg}</p>
+                    ${additionalInfo}
+                `;
+            }
+        }
+        
+        // Auto-test health on load
+        window.onload = function() {
+            testHealth();
+        };
+    </script>
+</body>
+</html>
+

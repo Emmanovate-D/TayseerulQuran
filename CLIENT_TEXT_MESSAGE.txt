@@ -1,0 +1,47 @@
+TAYSEERULQURAN - DEPLOYMENT LINKS & CREDENTIALS
+
+WEBSITE LINKS:
+Homepage: https://tayseerul-quran-c926.vercel.app/
+Login Page: https://tayseerul-quran-c926.vercel.app/login.html
+Register Page: https://tayseerul-quran-c926.vercel.app/register.html
+
+TEST LOGIN CREDENTIALS:
+
+1. SUPER ADMIN (Full Access)
+Email: superadmin@tayseerulquran.com
+Password: SuperAdmin123!
+
+2. ADMIN
+Email: admin@tayseerulquran.com
+Password: Admin123!
+
+3. TUTOR
+Email: tutor@tayseerulquran.com
+Password: Tutor123!
+
+4. STAFF
+Email: staff@tayseerulquran.com
+Password: Staff123!
+
+5. STUDENT
+Email: student@tayseerulquran.com
+Password: Student123!
+
+DASHBOARD LINKS:
+Super Admin Dashboard: https://tayseerul-quran-c926.vercel.app/super-admin-dashboard.html
+Staff Dashboard: https://tayseerul-quran-c926.vercel.app/staff-dashboard.html
+Admin Dashboard: https://tayseerul-quran-c926.vercel.app/admin-dashboard.html
+
+BACKEND API:
+API Base URL: https://tayseerulquran.onrender.com/api
+Health Check: https://tayseerulquran.onrender.com/
+
+NOTES:
+- All test accounts are ready to use
+- Passwords are case-sensitive
+- Users can register new accounts through the registration page
+- System is live and fully operational
+
+
+
+

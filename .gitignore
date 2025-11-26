@@ -1,0 +1,51 @@
+# Dependencies
+node_modules/
+package-lock.json
+
+# Environment variables
+.env
+.env.local
+.env.production
+.env.*
+!.env.example
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*.sublime-project
+*.sublime-workspace
+
+# Database
+*.sqlite
+*.db
+*.sql
+
+# Build
+dist/
+build/
+
+# Allow minified JS and CSS in assets folder (needed for deployment)
+!TayseerulQuran/assets/**/*.min.js
+!TayseerulQuran/assets/**/*.min.css
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+
+
+

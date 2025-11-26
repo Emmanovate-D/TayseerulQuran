@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <title>Manage Tutors - Super Admin | TayseerulQuran</title>
+    <meta name="description" content="Manage tutors - approve, reject, edit and delete tutor profiles">
+    <meta name="robots" content="noindex, follow" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="shortcut icon" type="image/x-icon" href="assets/images/favicon.ico">
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="assets/css/plugins/icofont.min.css">
+    <link rel="stylesheet" href="assets/css/plugins/flaticon.css">
+    <link rel="stylesheet" href="assets/css/plugins/font-awesome.min.css">
+    <link rel="stylesheet" href="assets/css/plugins/animate.min.css">
+    <link rel="stylesheet" href="assets/css/plugins/swiper-bundle.min.css">
+    <link rel="stylesheet" href="assets/css/plugins/magnific-popup.css">
+    <link rel="stylesheet" href="assets/css/plugins/nice-select.css">
+    <link rel="stylesheet" href="assets/css/style.css">
+</head>
+
+<body>
+
+    <div class="main-wrapper main-wrapper-02">
+
+        <!-- Login Header Start -->
+        <div class="section login-header">
+            <div class="login-header-wrapper navbar navbar-expand">
+                <div class="login-header-logo">
+                    <a href="super-admin-dashboard.html"><img src="assets/images/logo-icon.png" alt="Logo"></a>
+                </div>
+                <div class="login-header-action ml-auto">
+                    <a class="action author" href="#">
+                        <img src="assets/images/author/author-07.jpg" alt="Author">
+                    </a>
+                    <div class="dropdown">
+                        <button class="action more" data-bs-toggle="dropdown">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><a href="super-admin-dashboard.html"><i class="icofont-home"></i> Dashboard</a></li>
+                            <li><a href="login.html"><i class="icofont-logout"></i> Sign Out</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tutors Admin Start -->
+        <div class="section overflow-hidden position-relative" id="wrapper">
+            <div class="sidebar-wrapper">
+                <div class="menu-list">
+                    <a href="super-admin-dashboard.html" title="Dashboard"><img src="assets/images/menu-icon/icon-3.png" alt="Icon"></a>
+                    <a href="super-admin-courses.html" title="Courses" data-permission="view_courses"><img src="assets/images/menu-icon/icon-1.png" alt="Icon"></a>
+                    <a href="super-admin-students.html" title="Students" data-permission="view_students"><img src="assets/images/menu-icon/icon-2.png" alt="Icon"></a>
+                    <a class="active" href="super-admin-tutors.html" title="Tutors" data-permission="view_tutors"><img src="assets/images/menu-icon/icon-4.png" alt="Icon"></a>
+                    <a href="super-admin-payments.html" title="Payments" data-permission="view_payments"><img src="assets/images/menu-icon/icon-5.png" alt="Icon"></a>
+                    <a href="super-admin-roles.html" title="Admin Roles" data-role="super_admin"><img src="assets/images/menu-icon/icon-1.png" alt="Icon"></a>
+                    <a href="super-admin-blog.html" title="Blog" data-permission="view_blog_posts"><img src="assets/images/menu-icon/icon-2.png" alt="Icon"></a>
+                    <a href="super-admin-content.html" title="Content" data-permission="view_all_pages"><img src="assets/images/menu-icon/icon-3.png" alt="Icon"></a>
+                </div>
+            </div>
+
+            <div class="page-content-wrapper py-0">
+                <div class="nav flex-column nav-pills admin-tab-menu">
+                    <a href="super-admin-dashboard.html">Dashboard</a>
+                    <a href="super-admin-courses.html" data-permission="view_courses">Courses</a>
+                    <a href="super-admin-students.html" data-permission="view_students">Students</a>
+                    <a href="super-admin-tutors.html" class="active" data-permission="view_tutors">Tutors</a>
+                    <a href="super-admin-payments.html" data-permission="view_payments">Payments</a>
+                    <a href="super-admin-roles.html" data-role="super_admin">Admin Roles</a>
+                    <a href="super-admin-blog.html" data-permission="view_blog_posts">Blog</a>
+                </div>
+
+                <div class="main-content-wrapper">
+                    <div class="container-fluid">
+                        <div class="admin-top-bar flex-wrap mb-4">
+                            <div>
+                                <h3 class="title mb-2">Tutor Management</h3>
+                                <p class="text-muted">Approve tutors after signup and manage tutor profiles</p>
+                            </div>
+                            <div class="d-flex gap-3 align-items-center flex-wrap">
+                                <button class="btn btn-sm btn-primary px-3 py-2" onclick="openAddTutorModal()" style="font-size: 0.75rem;">
+                                    <i class="icofont-plus me-1"></i> Add New Tutor
+                                </button>
+                            <div class="btn-group">
+                                <button class="btn btn-sm btn-outline-primary active px-3 py-2 small" onclick="filterTutors('all')" style="font-size: 0.75rem;">All</button>
+                                    <button class="btn btn-sm btn-outline-warning px-3 py-2 small" onclick="filterTutors('pending')" style="font-size: 0.75rem;">Pending <span class="badge bg-warning" id="pendingBadge">0</span></button>
+                                <button class="btn btn-sm btn-outline-success px-3 py-2 small" onclick="filterTutors('approved')" style="font-size: 0.75rem;">Approved</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Pending Tutors Section -->
+                        <div class="card border-0 shadow-sm mb-4" id="pendingTutors">
+                            <div class="card-header bg-warning bg-opacity-10 border-0 py-3">
+                                <h5 class="mb-0"><i class="icofont-warning"></i> Pending Approval (0)</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th>Name</th>
+                                                <th>Email</th>
+                                                <th>Specialization</th>
+                                                <th>Experience</th>
+                                                <th>Applied Date</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td colspan="6" class="text-center">
+                                                    <div class="spinner-border text-primary" role="status">
+                                                        <span class="visually-hidden">Loading...</span>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Approved Tutors Section -->
+                        <div class="card border-0 shadow-sm" id="approvedTutors">
+                            <div class="card-header bg-white border-0 py-3">
+                                <h5 class="mb-0">Approved Tutors</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th>Name</th>
+                                                <th>Email</th>
+                                                <th>Specialization</th>
+                                                <th>Courses</th>
+                                                <th>Students</th>
+                                                <th>Status</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td colspan="7" class="text-center">
+                                                    <div class="spinner-border text-primary" role="status">
+                                                        <span class="visually-hidden">Loading...</span>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- View Tutor Modal -->
+        <div class="modal fade" id="viewTutorModal" tabindex="-1">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Tutor Profile</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-md-4 text-center">
+                                <img src="assets/images/author/author-04.jpg" class="rounded-circle mb-3" width="150" height="150" alt="">
+                                <h5>Sarah Williams</h5>
+                                <p class="text-muted">Tutor ID: TUT001</p>
+                                <span class="badge bg-warning">Pending Approval</span>
+                            </div>
+                            <div class="col-md-8">
+                                <table class="table table-borderless">
+                                    <tr>
+                                        <th>Email:</th>
+                                        <td>sarah.williams@example.com</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Phone:</th>
+                                        <td>+1 234 567 8901</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Specialization:</th>
+                                        <td>Web Development</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Experience:</th>
+                                        <td>5 years</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Education:</th>
+                                        <td>M.S. Computer Science</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Applied Date:</th>
+                                        <td>2024-01-15</td>
+                                    </tr>
+                                </table>
+                                <div class="mt-3">
+                                    <h6>Bio:</h6>
+                                    <p>Experienced web developer with expertise in modern JavaScript frameworks and full-stack development.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Edit Tutor Modal -->
+        <div class="modal fade" id="editTutorModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Edit Tutor</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="editTutorForm">
+                            <div class="mb-3">
+                                <label class="form-label">Full Name</label>
+                                <input type="text" class="form-control" id="editTutorName" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Email</label>
+                                <input type="email" class="form-control" id="editTutorEmail" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Specialization</label>
+                                <input type="text" class="form-control" id="editTutorSpecialization">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Status</label>
+                                <select class="form-control" id="editTutorStatus">
+                                    <option value="Active">Active</option>
+                                    <option value="Inactive">Inactive</option>
+                                </select>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-sm btn-secondary px-3 py-2 small" data-bs-dismiss="modal" style="font-size: 0.75rem;">Cancel</button>
+                        <button type="button" class="btn btn-sm btn-primary px-3 py-2 small" onclick="updateTutor()" style="font-size: 0.75rem;">Update</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add Tutor Modal -->
+        <div class="modal fade" id="addTutorModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Add New Tutor</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="addTutorForm">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">First Name <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="addTutorFirstName" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Last Name <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="addTutorLastName" required>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Email <span class="text-danger">*</span></label>
+                                <input type="email" class="form-control" id="addTutorEmail" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Password <span class="text-danger">*</span></label>
+                                <input type="password" class="form-control" id="addTutorPassword" required minlength="6">
+                                <small class="text-muted">Minimum 6 characters</small>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Phone</label>
+                                <input type="tel" class="form-control" id="addTutorPhone">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Specialization</label>
+                                <input type="text" class="form-control" id="addTutorSpecialization" placeholder="e.g., Tajweed, Hifdh, Arabic">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Experience (years)</label>
+                                <input type="number" class="form-control" id="addTutorExperience" min="0" placeholder="Years of teaching experience">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Bio</label>
+                                <textarea class="form-control" id="addTutorBio" rows="3" placeholder="Brief description about the tutor"></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="addTutorAutoApprove" checked>
+                                    <label class="form-check-label" for="addTutorAutoApprove">
+                                        Auto-approve this tutor
+                                    </label>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-sm btn-secondary px-3 py-2 small" data-bs-dismiss="modal" style="font-size: 0.75rem;">Cancel</button>
+                        <button type="button" class="btn btn-sm btn-primary px-3 py-2 small" onclick="saveTutor()" style="font-size: 0.75rem;">
+                            <i class="icofont-save me-1"></i> Save Tutor
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <a href="#" class="back-to-top">
+            <i class="icofont-simple-up"></i>
+        </a>
+
+    </div>
+
+    <script src="assets/js/vendor/modernizr-3.11.2.min.js"></script>
+    <script src="assets/js/vendor/jquery-3.5.1.min.js"></script>
+    <script src="assets/js/plugins.min.js"></script>
+    <script src="assets/js/main.js"></script>
+    <script src="assets/js/api.js?v=2"></script>
+    <script src="assets/js/utils.js"></script>
+    <script src="assets/js/role-access-control.js"></script>
+    <script>
+        // Authentication and role check - MUST BE FIRST
+        (function() {
+            // Wait for API to load
+            if (typeof API === 'undefined') {
+                setTimeout(arguments.callee, 100);
+                return;
+            }
+            
+            const token = API.config.getAuthToken();
+            const user = API.config.getUser();
+            
+            // Check authentication
+            if (!token || !user) {
+                console.log('No token or user found, redirecting to login');
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            // Check for super_admin role
+            let hasSuperAdminRole = false;
+            
+            if (user.roles && Array.isArray(user.roles)) {
+                hasSuperAdminRole = user.roles.some(role => {
+                    const roleName = (role.name || role).toLowerCase();
+                    return roleName === 'super_admin';
+                });
+            } else if (user.role) {
+                hasSuperAdminRole = user.role.toLowerCase() === 'super_admin';
+            }
+            
+            if (!hasSuperAdminRole) {
+                console.log('Super admin access required. Current user roles:', user.roles);
+                alert('Access denied. Super Admin access required.');
+                
+                // Redirect based on user's actual role
+                if (user.roles && Array.isArray(user.roles)) {
+                    const roleNames = user.roles.map(r => (r.name || r).toLowerCase());
+                    if (roleNames.includes('admin')) {
+                        window.location.href = 'admin-dashboard.html';
+                    } else {
+                        window.location.href = 'index.html';
+                    }
+                } else {
+                    window.location.href = 'index.html';
+                }
+                return;
+            }
+            
+            console.log('Super admin access granted');
+        })();
+        
+        // Set role on page load (after verification)
+        const user = API.config.getUser();
+        if (user && user.roles) {
+            const roleNames = user.roles.map(r => (r.name || r).toLowerCase());
+            if (roleNames.includes('super_admin')) {
+        localStorage.setItem('userRole', 'super_admin');
+            }
+        }
+        
+        let currentFilter = 'all';
+        let allTutors = [];
+        let currentEditingTutorId = null;
+        
+        // Open Add Tutor Modal
+        function openAddTutorModal() {
+            // Reset form
+            $('#addTutorForm')[0].reset();
+            $('#addTutorAutoApprove').prop('checked', true);
+            $('#addTutorModal').modal('show');
+        }
+        
+        // Save new tutor
+        async function saveTutor() {
+            try {
+                const firstName = $('#addTutorFirstName').val().trim();
+                const lastName = $('#addTutorLastName').val().trim();
+                const email = $('#addTutorEmail').val().trim();
+                const password = $('#addTutorPassword').val();
+                const phone = $('#addTutorPhone').val().trim();
+                const specialization = $('#addTutorSpecialization').val().trim();
+                const experience = $('#addTutorExperience').val();
+                const bio = $('#addTutorBio').val().trim();
+                const autoApprove = $('#addTutorAutoApprove').is(':checked');
+                
+                // Validate required fields
+                if (!firstName || firstName.length < 2) {
+                    showMessage('First name must be at least 2 characters', 'error');
+                    return;
+                }
+                
+                if (!lastName || lastName.length < 2) {
+                    showMessage('Last name must be at least 2 characters', 'error');
+                    return;
+                }
+                
+                if (!email) {
+                    showMessage('Email is required', 'error');
+                    return;
+                }
+                
+                // Validate email format
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (!emailRegex.test(email)) {
+                    showMessage('Please enter a valid email address', 'error');
+                    return;
+                }
+                
+                if (!password || password.length < 6) {
+                    showMessage('Password must be at least 6 characters', 'error');
+                    return;
+                }
+                
+                // Create tutor using the new API endpoint
+                const tutorData = {
+                    firstName: firstName,
+                    lastName: lastName,
+                    email: email,
+                    password: password,
+                    phone: phone || null,
+                    specialization: specialization || null,
+                    experience: experience ? parseInt(experience) : null,
+                    bio: bio || null,
+                    isApproved: autoApprove
+                };
+                
+                console.log('Creating tutor:', tutorData);
+                
+                const response = await API.tutor.create(tutorData);
+                
+                if (response.success) {
+                    showMessage('Tutor created successfully!');
+                    $('#addTutorModal').modal('hide');
+                    $('#addTutorForm')[0].reset();
+                    loadTutors();
+                } else {
+                    showMessage(response.message || 'Failed to create tutor', 'error');
+                }
+            } catch (error) {
+                console.error('Error creating tutor:', error);
+                showMessage(error.message || 'Failed to create tutor. Please try again.', 'error');
+            }
+        }
+        
+        // Load tutors from API
+        async function loadTutors() {
+            try {
+                const response = await API.tutor.getAll();
+                const pendingTbody = $('#pendingTutors tbody');
+                const approvedTbody = $('#approvedTutors tbody');
+                
+                if (response.success && response.data && response.data.tutors) {
+                    allTutors = response.data.tutors;
+                    
+                    // Separate pending and approved tutors
+                    const pendingTutors = allTutors.filter(tutor => !tutor.isApproved);
+                    const approvedTutors = allTutors.filter(tutor => tutor.isApproved);
+                    
+                    // Update pending count
+                    $('#pendingTutors .card-header h5').html(`<i class="icofont-warning"></i> Pending Approval (${pendingTutors.length})`);
+                    $('button[onclick="filterTutors(\'pending\')"] .badge').text(pendingTutors.length);
+                    
+                    // Render pending tutors
+                    if (pendingTutors.length === 0) {
+                        pendingTbody.html('<tr><td colspan="6" class="text-center text-muted">No pending tutors</td></tr>');
+                    } else {
+                        let pendingHtml = '';
+                        pendingTutors.forEach(tutor => {
+                            const user = tutor.user || {};
+                            const fullName = `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'Unknown';
+                            const email = user.email || 'N/A';
+                            const specialization = tutor.specialization || 'N/A';
+                            const experience = tutor.experience ? `${tutor.experience} years` : 'N/A';
+                            const appliedDate = tutor.createdAt ? new Date(tutor.createdAt).toLocaleDateString() : 'N/A';
+                            const profileImage = user.profileImage || 'assets/images/author/author-04.jpg';
+                            
+                            pendingHtml += `
+                                <tr data-tutor-id="${tutor.id}">
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <img src="${profileImage}" class="rounded-circle me-2" width="40" height="40" alt="">
+                                            <strong>${fullName}</strong>
+                                        </div>
+                                    </td>
+                                    <td>${email}</td>
+                                    <td>${specialization}</td>
+                                    <td>${experience}</td>
+                                    <td>${appliedDate}</td>
+                                    <td>
+                                        <button class="btn btn-sm btn-success px-2 py-1 small" onclick="approveTutor(event, ${tutor.id})" data-permission="approve_tutor" style="font-size: 0.7rem;">
+                                            <i class="icofont-check me-1"></i> Approve
+                                        </button>
+                                        <button class="btn btn-sm btn-danger px-2 py-1 small" onclick="rejectTutor(event, ${tutor.id})" data-permission="reject_tutor" style="font-size: 0.7rem;">
+                                            <i class="icofont-close me-1"></i> Reject
+                                        </button>
+                                        <button class="btn btn-sm btn-info px-2 py-1" onclick="viewTutor(${tutor.id})" data-permission="view_tutor_profile" style="font-size: 0.7rem;">
+                                            <i class="icofont-eye"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            `;
+                        });
+                        pendingTbody.html(pendingHtml);
+                    }
+                    
+                    // Render approved tutors
+                    if (approvedTutors.length === 0) {
+                        approvedTbody.html('<tr><td colspan="7" class="text-center text-muted">No approved tutors</td></tr>');
+                    } else {
+                        let approvedHtml = '';
+                        approvedTutors.forEach(tutor => {
+                            const user = tutor.user || {};
+                            const fullName = `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'Unknown';
+                            const email = user.email || 'N/A';
+                            const specialization = tutor.specialization || 'N/A';
+                            const coursesCount = tutor.totalCourses || 0;
+                            const studentsCount = tutor.totalStudents || 0;
+                            const status = tutor.isActive ? '<span class="badge bg-success">Active</span>' : '<span class="badge bg-secondary">Inactive</span>';
+                            const profileImage = user.profileImage || 'assets/images/author/author-07.jpg';
+                            
+                            approvedHtml += `
+                                <tr data-tutor-id="${tutor.id}">
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <img src="${profileImage}" class="rounded-circle me-2" width="40" height="40" alt="">
+                                            <strong>${fullName}</strong>
+                                        </div>
+                                    </td>
+                                    <td>${email}</td>
+                                    <td>${specialization}</td>
+                                    <td>${coursesCount}</td>
+                                    <td>${studentsCount}</td>
+                                    <td>${status}</td>
+                                    <td>
+                                        <button class="btn btn-sm btn-info px-2 py-1" onclick="viewTutor(${tutor.id})" data-permission="view_tutor_profile" style="font-size: 0.7rem;">
+                                            <i class="icofont-eye"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-warning px-2 py-1" onclick="openEditTutorModal(${tutor.id})" data-permission="edit_tutor" style="font-size: 0.7rem;">
+                                            <i class="icofont-edit"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-danger px-2 py-1" onclick="deleteTutor(event, ${tutor.id})" data-permission="delete_tutor" style="font-size: 0.7rem;">
+                                            <i class="icofont-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            `;
+                        });
+                        approvedTbody.html(approvedHtml);
+                    }
+                    
+                    // Apply current filter
+                    applyFilter(currentFilter);
+                } else {
+                    pendingTbody.html('<tr><td colspan="6" class="text-center text-muted">Failed to load tutors</td></tr>');
+                    approvedTbody.html('<tr><td colspan="7" class="text-center text-muted">Failed to load tutors</td></tr>');
+                }
+            } catch (error) {
+                console.error('Error loading tutors:', error);
+                $('#pendingTutors tbody').html('<tr><td colspan="6" class="text-center text-danger">Error loading tutors. Please refresh the page.</td></tr>');
+                $('#approvedTutors tbody').html('<tr><td colspan="7" class="text-center text-danger">Error loading tutors. Please refresh the page.</td></tr>');
+            }
+        }
+        
+        // Filter tutors
+        function filterTutors(status) {
+            currentFilter = status;
+            applyFilter(status);
+            
+            // Update button states
+            $('.btn-group button').removeClass('active');
+            $(`.btn-group button[onclick="filterTutors('${status}')"]`).addClass('active');
+        }
+        
+        function applyFilter(status) {
+            if (status === 'all') {
+                $('#pendingTutors').show();
+                $('#approvedTutors').show();
+            } else if (status === 'pending') {
+                $('#pendingTutors').show();
+                $('#approvedTutors').hide();
+            } else if (status === 'approved') {
+                $('#pendingTutors').hide();
+                $('#approvedTutors').show();
+            }
+        }
+        
+        // Show success/error message
+        function showMessage(message, type = 'success') {
+            const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
+            const messageHtml = `<div class="alert ${alertClass} alert-dismissible fade show" role="alert" style="position: fixed; top: 20px; right: 20px; z-index: 9999; min-width: 300px;">
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>`;
+            $('body').append(messageHtml);
+            setTimeout(() => $('.alert').fadeOut(), 5000);
+        }
+        
+        // Approve tutor
+        async function approveTutor(evt, id) {
+            if (!confirm('Are you sure you want to approve this tutor?')) {
+                return;
+            }
+            
+            const button = evt.target.closest('button');
+            const originalText = button.innerHTML;
+            
+            try {
+                button.disabled = true;
+                button.innerHTML = '<i class="icofont-spinner-alt icofont-spin"></i> Approving...';
+                
+                const response = await API.tutor.approve(id);
+                
+                if (response.success) {
+                    showMessage('Tutor approved successfully!');
+                    // Remove from pending table and reload
+                    $(`tr[data-tutor-id="${id}"]`).fadeOut(300, function() {
+                        $(this).remove();
+                        loadTutors();
+                    });
+                } else {
+                    showMessage(response.message || 'Failed to approve tutor', 'error');
+                    button.disabled = false;
+                    button.innerHTML = originalText;
+                }
+            } catch (error) {
+                console.error('Error approving tutor:', error);
+                showMessage(error.message || 'Failed to approve tutor. Please try again.', 'error');
+                button.disabled = false;
+                button.innerHTML = originalText;
+            }
+        }
+        
+        // Reject tutor
+        async function rejectTutor(evt, id) {
+            if (!confirm('Are you sure you want to reject this tutor application? This action cannot be undone.')) {
+                return;
+            }
+            
+            const button = evt.target.closest('button');
+            const originalText = button.innerHTML;
+            
+            try {
+                button.disabled = true;
+                button.innerHTML = '<i class="icofont-spinner-alt icofont-spin"></i> Rejecting...';
+                
+                // Use the reject endpoint
+                const response = await API.tutor.reject(id);
+                
+                if (response.success) {
+                    showMessage('Tutor application rejected.');
+                    // Remove from pending table
+                    $(`tr[data-tutor-id="${id}"]`).fadeOut(300, function() {
+                        $(this).remove();
+                        loadTutors();
+                    });
+                } else {
+                    showMessage(response.message || 'Failed to reject tutor', 'error');
+                    button.disabled = false;
+                    button.innerHTML = originalText;
+                }
+            } catch (error) {
+                console.error('Error rejecting tutor:', error);
+                showMessage(error.message || 'Failed to reject tutor. Please try again.', 'error');
+                button.disabled = false;
+                button.innerHTML = originalText;
+            }
+        }
+        
+        // View tutor details
+        async function viewTutor(id) {
+            try {
+                const response = await API.tutor.getById(id);
+                if (response.success && response.data && response.data.tutor) {
+                    const tutor = response.data.tutor;
+                    const user = tutor.user || {};
+                    const fullName = `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'Unknown';
+                    const email = user.email || 'N/A';
+                    const phone = user.phone || 'N/A';
+                    const specialization = tutor.specialization || 'N/A';
+                    const experience = tutor.experience ? `${tutor.experience} years` : 'N/A';
+                    const bio = tutor.bio || 'No bio available';
+                    const qualifications = tutor.qualifications || 'N/A';
+                    const appliedDate = tutor.createdAt ? new Date(tutor.createdAt).toLocaleDateString() : 'N/A';
+                    const profileImage = user.profileImage || 'assets/images/author/author-04.jpg';
+                    const status = tutor.isApproved ? '<span class="badge bg-success">Approved</span>' : '<span class="badge bg-warning">Pending Approval</span>';
+                    
+                    // Update modal content
+                    $('#viewTutorModal .modal-body').html(`
+                        <div class="row">
+                            <div class="col-md-4 text-center">
+                                <img src="${profileImage}" class="rounded-circle mb-3" width="150" height="150" alt="">
+                                <h5>${fullName}</h5>
+                                <p class="text-muted">Tutor ID: ${tutor.tutorId || 'N/A'}</p>
+                                ${status}
+                            </div>
+                            <div class="col-md-8">
+                                <table class="table table-borderless">
+                                    <tr>
+                                        <th>Email:</th>
+                                        <td>${email}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Phone:</th>
+                                        <td>${phone}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Specialization:</th>
+                                        <td>${specialization}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Experience:</th>
+                                        <td>${experience}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Education:</th>
+                                        <td>${qualifications}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Applied Date:</th>
+                                        <td>${appliedDate}</td>
+                                    </tr>
+                                </table>
+                                <div class="mt-3">
+                                    <h6>Bio:</h6>
+                                    <p>${bio}</p>
+                                </div>
+                            </div>
+                        </div>
+                    `);
+                    
+                    $('#viewTutorModal').modal('show');
+                } else {
+                    showMessage('Failed to load tutor details', 'error');
+                }
+            } catch (error) {
+                console.error('Error loading tutor:', error);
+                showMessage('Failed to load tutor details. Please try again.', 'error');
+            }
+        }
+        
+        // Open edit tutor modal
+        async function openEditTutorModal(id) {
+            currentEditingTutorId = id;
+            
+            try {
+                const response = await API.tutor.getById(id);
+                if (response.success && response.data && response.data.tutor) {
+                    const tutor = response.data.tutor;
+                    const user = tutor.user || {};
+                    const fullName = `${user.firstName || ''} ${user.lastName || ''}`.trim() || '';
+                    const email = user.email || '';
+                    const specialization = tutor.specialization || '';
+                    const status = tutor.isActive ? 'Active' : 'Inactive';
+                    
+                    // Use IDs to populate form fields
+                    $('#editTutorName').val(fullName);
+                    $('#editTutorEmail').val(email);
+                    $('#editTutorSpecialization').val(specialization);
+                    $('#editTutorStatus').val(status);
+                    
+                    $('#editTutorModal').modal('show');
+                } else {
+                    showMessage('Failed to load tutor details', 'error');
+                }
+            } catch (error) {
+                console.error('Error loading tutor:', error);
+                showMessage('Failed to load tutor details. Please try again.', 'error');
+            }
+        }
+        
+        // Update tutor
+        async function updateTutor() {
+            if (!currentEditingTutorId) {
+                showMessage('No tutor selected', 'error');
+                return;
+            }
+            
+            try {
+                // Use IDs to get form values
+                const fullName = $('#editTutorName').val().trim();
+                const email = $('#editTutorEmail').val().trim();
+                const specialization = $('#editTutorSpecialization').val().trim();
+                const status = $('#editTutorStatus').val();
+                
+                if (!fullName || !email) {
+                    showMessage('Please fill in all required fields', 'error');
+                    return;
+                }
+                
+                // Get tutor details first to get userId
+                const tutorResponse = await API.tutor.getById(currentEditingTutorId);
+                if (!tutorResponse.success || !tutorResponse.data || !tutorResponse.data.tutor) {
+                    showMessage('Failed to load tutor details', 'error');
+                    return;
+                }
+                
+                const tutor = tutorResponse.data.tutor;
+                const nameParts = fullName.split(' ');
+                const firstName = nameParts[0] || '';
+                const lastName = nameParts.slice(1).join(' ') || '';
+                
+                // Update user info if userId exists
+                if (tutor.userId) {
+                    await API.user.update(tutor.userId, {
+                        firstName: firstName,
+                        lastName: lastName,
+                        email: email,
+                        isActive: status === 'Active'
+                    });
+                }
+                
+                // Update tutor info
+                const response = await API.tutor.update(currentEditingTutorId, {
+                    specialization: specialization,
+                    isActive: status === 'Active'
+                });
+                
+                if (response.success) {
+                    showMessage('Tutor updated successfully!');
+            $('#editTutorModal').modal('hide');
+                    currentEditingTutorId = null;
+                    await loadTutors();
+                } else {
+                    showMessage(response.message || 'Failed to update tutor', 'error');
+                }
+            } catch (error) {
+                console.error('Error updating tutor:', error);
+                showMessage(error.message || 'Failed to update tutor. Please try again.', 'error');
+            }
+        }
+        
+        // Delete tutor
+        async function deleteTutor(evt, id) {
+            if (!confirm('Are you sure you want to delete this tutor? This action cannot be undone.')) {
+                return;
+            }
+            
+            const button = evt.target.closest('button');
+            const originalText = button.innerHTML;
+            
+            try {
+                button.disabled = true;
+                button.innerHTML = '<i class="icofont-spinner-alt icofont-spin"></i>';
+                
+                const response = await API.tutor.delete(id);
+                
+                if (response.success) {
+                    showMessage('Tutor deleted successfully!');
+                    $(`tr[data-tutor-id="${id}"]`).fadeOut(300, function() {
+                        $(this).remove();
+                        loadTutors();
+                    });
+                } else {
+                    showMessage(response.message || 'Failed to delete tutor', 'error');
+                    button.disabled = false;
+                    button.innerHTML = originalText;
+                }
+            } catch (error) {
+                console.error('Error deleting tutor:', error);
+                showMessage(error.message || 'Failed to delete tutor. Please try again.', 'error');
+                button.disabled = false;
+                button.innerHTML = originalText;
+            }
+        }
+        
+        // Load tutors on page load
+        $(document).ready(function() {
+            loadTutors();
+        });
+    </script>
+
+</body>
+
+</html>
+
