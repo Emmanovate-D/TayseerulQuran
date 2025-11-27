@@ -11,12 +11,26 @@ const getAllPayments = async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const offset = (page - 1) * limit;
-    const { status, userId, courseId } = req.query;
+    const { status, userId, courseId, dateFrom, dateTo } = req.query;
 
     const where = {};
     if (status) where.status = status;
     if (userId) where.userId = userId;
     if (courseId) where.courseId = courseId;
+    
+    // Date range filtering
+    if (dateFrom || dateTo) {
+      where.createdAt = {};
+      if (dateFrom) {
+        where.createdAt[Op.gte] = new Date(dateFrom);
+      }
+      if (dateTo) {
+        // Include the entire end date by setting time to end of day
+        const endDate = new Date(dateTo);
+        endDate.setHours(23, 59, 59, 999);
+        where.createdAt[Op.lte] = endDate;
+      }
+    }
 
     const { count, rows: payments } = await Payment.findAndCountAll({
       where,
