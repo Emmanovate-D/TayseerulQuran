@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <title>Checkout - TayseerulQuran</title>
+    <meta name="robots" content="noindex, follow" />
+    <meta name="description" content="Complete your course enrollment payment">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="shortcut icon" type="image/x-icon" href="assets/images/favicon.ico">
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="assets/css/plugins/icofont.min.css">
+    <link rel="stylesheet" href="assets/css/plugins/flaticon.css">
+    <link rel="stylesheet" href="assets/css/plugins/font-awesome.min.css">
+    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="stylesheet" href="assets/css/rtl.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+
+    <div class="main-wrapper">
+
+        <!-- Header Section Start -->
+        <div class="header-section">
+            <div class="header-main">
+                <div class="container">
+                    <div class="header-main-wrapper">
+                        <div class="header-logo">
+                            <a href="index.html"><img src="assets/images/logo.png" alt="Logo"></a>
+                        </div>
+                        <div class="header-menu d-none d-lg-block">
+                            <ul class="nav-menu">
+                                <li><a href="index.html">Home</a></li>
+                                <li><a href="courses.html">All Courses</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Header Section End -->
+
+        <!-- Page Banner Start -->
+        <div class="section page-banner">
+            <div class="container">
+                <div class="page-banner-content">
+                    <ul class="breadcrumb">
+                        <li><a href="index.html">Home</a></li>
+                        <li><a href="courses.html">Courses</a></li>
+                        <li>Checkout</li>
+                    </ul>
+                    <h2 class="title">Complete <span>Payment</span></h2>
+                </div>
+            </div>
+        </div>
+        <!-- Page Banner End -->
+
+        <!-- Checkout Section Start -->
+        <div class="section section-padding">
+            <div class="container">
+                <div class="row">
+                    <!-- Payment Form -->
+                    <div class="col-lg-8">
+                        <div class="card mb-4">
+                            <div class="card-body">
+                                <h4 class="card-title mb-4">Payment Method</h4>
+                                
+                                <div id="checkoutMessage" class="alert" style="display: none;"></div>
+                                
+                                <form id="checkoutForm">
+                                    <div class="mb-4">
+                                        <label class="form-label fw-bold">Select Payment Method</label>
+                                        <div class="payment-methods">
+                                            <div class="form-check mb-3">
+                                                <input class="form-check-input" type="radio" name="paymentMethod" id="creditCard" value="credit_card" checked>
+                                                <label class="form-check-label" for="creditCard">
+                                                    <i class="icofont-credit-card"></i> Credit/Debit Card
+                                                </label>
+                                            </div>
+                                            <div class="form-check mb-3">
+                                                <input class="form-check-input" type="radio" name="paymentMethod" id="bankTransfer" value="bank_transfer">
+                                                <label class="form-check-label" for="bankTransfer">
+                                                    <i class="icofont-bank"></i> Bank Transfer
+                                                </label>
+                                            </div>
+                                            <div class="form-check mb-3">
+                                                <input class="form-check-input" type="radio" name="paymentMethod" id="paypal" value="paypal">
+                                                <label class="form-check-label" for="paypal">
+                                                    <i class="icofont-paypal"></i> PayPal
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Credit Card Fields -->
+                                    <div id="creditCardFields">
+                                        <div class="row mb-3">
+                                            <div class="col-12">
+                                                <label class="form-label">Card Number</label>
+                                                <input type="text" class="form-control" id="cardNumber" placeholder="1234 5678 9012 3456" maxlength="19">
+                                            </div>
+                                        </div>
+                                        <div class="row mb-3">
+                                            <div class="col-md-6">
+                                                <label class="form-label">Expiry Date</label>
+                                                <input type="text" class="form-control" id="expiryDate" placeholder="MM/YY" maxlength="5">
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label">CVV</label>
+                                                <input type="text" class="form-control" id="cvv" placeholder="123" maxlength="4">
+                                            </div>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Cardholder Name</label>
+                                            <input type="text" class="form-control" id="cardholderName" placeholder="Name on card">
+                                        </div>
+                                    </div>
+
+                                    <!-- Bank Transfer Fields -->
+                                    <div id="bankTransferFields" style="display: none;">
+                                        <div class="alert alert-info">
+                                            <h6>Bank Transfer Instructions</h6>
+                                            <p>Please transfer the amount to:</p>
+                                            <ul>
+                                                <li><strong>Bank:</strong> [Your Bank Name]</li>
+                                                <li><strong>Account Number:</strong> [Account Number]</li>
+                                                <li><strong>Account Name:</strong> TayseerulQuran</li>
+                                                <li><strong>Reference:</strong> <span id="bankReference"></span></li>
+                                            </ul>
+                                            <p class="mb-0"><small>Your enrollment will be activated once payment is confirmed (usually within 1-2 business days).</small></p>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Transaction Reference (Optional)</label>
+                                            <input type="text" class="form-control" id="bankReferenceInput" placeholder="Enter your bank transaction reference">
+                                        </div>
+                                    </div>
+
+                                    <!-- PayPal Fields -->
+                                    <div id="paypalFields" style="display: none;">
+                                        <div class="alert alert-info">
+                                            <p>You will be redirected to PayPal to complete your payment.</p>
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-3 form-check">
+                                        <input type="checkbox" class="form-check-input" id="agreePayment" required>
+                                        <label class="form-check-label" for="agreePayment">
+                                            I confirm that the payment information provided is correct
+                                        </label>
+                                    </div>
+                                    
+                                    <div class="d-grid gap-2">
+                                        <button type="submit" class="btn btn-primary btn-lg" id="payBtn">
+                                            Complete Payment
+                                        </button>
+                                        <a href="enroll.html" class="btn btn-outline-secondary">Back</a>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Order Summary -->
+                    <div class="col-lg-4">
+                        <div class="card">
+                            <div class="card-body">
+                                <h4 class="card-title mb-4">Order Summary</h4>
+                                <div id="orderSummary">
+                                    <div class="text-center py-3">
+                                        <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Checkout Section End -->
+
+        <!-- Footer Start -->
+        <div class="section footer-section">
+            <div class="footer-copyright">
+                <div class="container">
+                    <div class="copyright-wrapper">
+                        <div class="copyright-text">
+                            <p>&copy; 2025 <span>Tayseer ul Qur'an</span></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Footer End -->
+
+        <a href="#" class="back-to-top"><i class="icofont-simple-up"></i></a>
+
+    </div>
+
+    <!-- JS -->
+    <script src="assets/js/vendor/modernizr-3.11.2.min.js"></script>
+    <script src="assets/js/vendor/jquery-3.5.1.min.js"></script>
+    <script src="assets/js/plugins.min.js"></script>
+    <script src="assets/js/main.js"></script>
+    <script src="assets/js/api.js"></script>
+
+    <script>
+        let enrollmentData = null;
+        let currentCourse = null;
+        let currentUser = null;
+
+        // Check authentication
+        function checkAuth() {
+            const user = API.config.getUser();
+            const token = API.config.getAuthToken();
+            
+            if (!user || !token) {
+                window.location.href = 'login.html';
+                return false;
+            }
+            
+            currentUser = user;
+            return true;
+        }
+
+        // Load enrollment data
+        function loadEnrollmentData() {
+            // Get from sessionStorage or URL
+            const stored = sessionStorage.getItem('pendingEnrollment');
+            if (stored) {
+                enrollmentData = JSON.parse(stored);
+                currentCourse = enrollmentData.course;
+                displayOrderSummary();
+                return;
+            }
+
+            // Try to get from URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const courseId = urlParams.get('course');
+            
+            if (courseId) {
+                loadCourseFromAPI(courseId);
+            } else {
+                showMessage('No enrollment data found. Please start over.', 'error');
+                setTimeout(() => {
+                    window.location.href = 'courses.html';
+                }, 2000);
+            }
+        }
+
+        // Load course from API
+        async function loadCourseFromAPI(courseId) {
+            try {
+                const response = await API.course.getById(courseId);
+                const course = response.data?.course || response.course || response.data;
+                
+                if (!course) {
+                    throw new Error('Course not found');
+                }
+
+                currentCourse = course;
+                enrollmentData = {
+                    courseId: course.id,
+                    course: course,
+                    user: currentUser,
+                    timestamp: new Date().toISOString()
+                };
+                
+                displayOrderSummary();
+                
+            } catch (error) {
+                console.error('Error loading course:', error);
+                showMessage('Unable to load course details.', 'error');
+            }
+        }
+
+        // Display order summary
+        function displayOrderSummary() {
+            if (!currentCourse) return;
+
+            const summaryDiv = document.getElementById('orderSummary');
+            const price = currentCourse.price > 0 ? parseFloat(currentCourse.price).toFixed(2) : '0.00';
+            const total = parseFloat(price);
+
+            summaryDiv.innerHTML = `
+                <div class="mb-3">
+                    <h6>${currentCourse.title || 'Course'}</h6>
+                    <p class="text-muted small mb-2">${currentCourse.category || 'General'}</p>
+                </div>
+                <hr>
+                <div class="d-flex justify-content-between mb-2">
+                    <span>Course Price:</span>
+                    <strong>$${price}</strong>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span>Tax:</span>
+                    <strong>$0.00</strong>
+                </div>
+                <hr>
+                <div class="d-flex justify-content-between mb-3">
+                    <span class="h5">Total:</span>
+                    <span class="h5 text-primary">$${total.toFixed(2)}</span>
+                </div>
+                <div class="alert alert-info small">
+                    <i class="icofont-info-circle"></i> You will receive a confirmation email after payment.
+                </div>
+            `;
+
+            // Generate bank reference
+            const bankRef = `ENR-${currentCourse.id}-${Date.now()}`;
+            document.getElementById('bankReference').textContent = bankRef;
+        }
+
+        // Show message
+        function showMessage(message, type = 'info') {
+            const messageDiv = document.getElementById('checkoutMessage');
+            messageDiv.className = `alert alert-${type === 'error' ? 'danger' : type === 'success' ? 'success' : 'info'}`;
+            messageDiv.textContent = message;
+            messageDiv.style.display = 'block';
+            
+            setTimeout(() => {
+                messageDiv.style.display = 'none';
+            }, 5000);
+        }
+
+        // Handle payment method change
+        document.querySelectorAll('input[name="paymentMethod"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                const method = this.value;
+                document.getElementById('creditCardFields').style.display = method === 'credit_card' ? 'block' : 'none';
+                document.getElementById('bankTransferFields').style.display = method === 'bank_transfer' ? 'block' : 'none';
+                document.getElementById('paypalFields').style.display = method === 'paypal' ? 'block' : 'none';
+            });
+        });
+
+        // Format card number
+        document.getElementById('cardNumber')?.addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\s/g, '');
+            let formattedValue = value.match(/.{1,4}/g)?.join(' ') || value;
+            e.target.value = formattedValue;
+        });
+
+        // Format expiry date
+        document.getElementById('expiryDate')?.addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value.length >= 2) {
+                value = value.substring(0, 2) + '/' + value.substring(2, 4);
+            }
+            e.target.value = value;
+        });
+
+        // Handle form submission
+        document.getElementById('checkoutForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            if (!currentCourse || !enrollmentData) {
+                showMessage('Please wait for order details to load.', 'error');
+                return;
+            }
+
+            const payBtn = document.getElementById('payBtn');
+            const originalText = payBtn.textContent;
+            payBtn.disabled = true;
+            payBtn.textContent = 'Processing...';
+
+            const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked').value;
+            const amount = parseFloat(currentCourse.price || 0);
+
+            try {
+                // Create payment record
+                const paymentData = {
+                    courseId: currentCourse.id,
+                    amount: amount,
+                    currency: 'USD',
+                    paymentMethod: paymentMethod,
+                    description: `Payment for ${currentCourse.title}`,
+                    metadata: {
+                        courseId: currentCourse.id,
+                        courseTitle: currentCourse.title,
+                        userId: currentUser.id,
+                        userEmail: currentUser.email
+                    }
+                };
+
+                // Add payment method specific data
+                if (paymentMethod === 'credit_card') {
+                    paymentData.metadata.cardLast4 = document.getElementById('cardNumber').value.slice(-4);
+                    paymentData.metadata.cardholderName = document.getElementById('cardholderName').value;
+                } else if (paymentMethod === 'bank_transfer') {
+                    paymentData.metadata.bankReference = document.getElementById('bankReference').textContent;
+                    paymentData.metadata.userReference = document.getElementById('bankReferenceInput').value;
+                    paymentData.status = 'pending'; // Bank transfers are pending until confirmed
+                }
+
+                // Process payment through gateway
+                const paymentResponse = await API.payment.processPayment(paymentData);
+                const payment = paymentResponse.data?.payment || paymentResponse.data || paymentResponse;
+
+                // Clear session storage
+                sessionStorage.removeItem('pendingEnrollment');
+
+                // Store payment ID for success page
+                sessionStorage.setItem('lastPaymentId', payment.id);
+
+                // Redirect based on payment status
+                if (payment.status === 'pending' || paymentMethod === 'bank_transfer') {
+                    // For bank transfer or pending payments, show pending status
+                    window.location.href = `enrol-success.html?payment=${payment.id}&status=pending`;
+                } else {
+                    // For completed payments, show success
+                    window.location.href = `enrol-success.html?payment=${payment.id}&status=completed`;
+                }
+
+            } catch (error) {
+                console.error('Payment error:', error);
+                showMessage(error.message || 'Payment failed. Please try again.', 'error');
+                payBtn.disabled = false;
+                payBtn.textContent = originalText;
+            }
+        });
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            if (!checkAuth()) {
+                return;
+            }
+
+            loadEnrollmentData();
+        });
+    </script>
+
+</body>
+
+</html>
+

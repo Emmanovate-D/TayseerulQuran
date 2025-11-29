@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <title>Verify Email - TayseerulQuran</title>
+    <meta name="robots" content="noindex, follow" />
+    <meta name="description" content="Verify your email address">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="shortcut icon" type="image/x-icon" href="assets/images/favicon.ico">
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="assets/css/plugins/icofont.min.css">
+    <link rel="stylesheet" href="assets/css/plugins/flaticon.css">
+    <link rel="stylesheet" href="assets/css/plugins/font-awesome.min.css">
+    <link rel="stylesheet" href="assets/css/style.css">
+</head>
+
+<body>
+
+    <div class="main-wrapper">
+
+        <!-- Header Section Start -->
+        <div class="header-section">
+            <div class="header-main">
+                <div class="container">
+                    <div class="header-main-wrapper">
+                        <div class="header-logo">
+                            <a href="index.html"><img src="assets/images/logo.png" alt="Logo"></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Header Section End -->
+
+        <!-- Verification Section Start -->
+        <div class="section section-padding">
+            <div class="container">
+                <div class="row justify-content-center">
+                    <div class="col-lg-6 col-md-8">
+                        <div class="card">
+                            <div class="card-body text-center py-5">
+                                <div class="mb-4">
+                                    <i class="icofont-envelope" style="font-size: 80px; color: #007bff;"></i>
+                                </div>
+                                
+                                <h2 class="mb-3">Verify Your Email</h2>
+                                
+                                <div id="verificationMessage">
+                                    <p class="text-muted mb-4">Please check your email and click the verification link to activate your account.</p>
+                                </div>
+
+                                <div id="verificationStatus" class="mb-4">
+                                    <!-- Status will be shown here -->
+                                </div>
+
+                                <div class="d-grid gap-2">
+                                    <button type="button" class="btn btn-primary" id="resendBtn">Resend Verification Email</button>
+                                    <a href="login.html" class="btn btn-outline-secondary">Back to Login</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Verification Section End -->
+
+        <!-- Footer Start -->
+        <div class="section footer-section">
+            <div class="footer-copyright">
+                <div class="container">
+                    <div class="copyright-wrapper">
+                        <div class="copyright-text">
+                            <p>&copy; 2025 <span>Tayseer ul Qur'an</span></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Footer End -->
+
+    </div>
+
+    <!-- JS -->
+    <script src="assets/js/vendor/modernizr-3.11.2.min.js"></script>
+    <script src="assets/js/vendor/jquery-3.5.1.min.js"></script>
+    <script src="assets/js/plugins.min.js"></script>
+    <script src="assets/js/main.js"></script>
+    <script src="assets/js/api.js"></script>
+
+    <script>
+        // Check if token is in URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const token = urlParams.get('token');
+        const email = urlParams.get('email');
+
+        // Verify email if token is present
+        if (token) {
+            verifyEmail(token);
+        }
+
+        async function verifyEmail(verificationToken) {
+            const statusDiv = document.getElementById('verificationStatus');
+            statusDiv.innerHTML = '<div class="spinner-border text-primary" role="status"></div><p class="text-muted mt-2">Verifying...</p>';
+
+            try {
+                // This endpoint would need to be created in the backend
+                const response = await fetch(`${API.config.BASE_URL}/auth/verify-email`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ token: verificationToken })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    statusDiv.innerHTML = `
+                        <div class="alert alert-success">
+                            <h5><i class="icofont-check-circled"></i> Email Verified Successfully!</h5>
+                            <p>Your email has been verified. You can now log in to your account.</p>
+                        </div>
+                    `;
+                    setTimeout(() => {
+                        window.location.href = 'login.html';
+                    }, 3000);
+                } else {
+                    throw new Error(data.message || 'Verification failed');
+                }
+            } catch (error) {
+                console.error('Verification error:', error);
+                statusDiv.innerHTML = `
+                    <div class="alert alert-danger">
+                        <h5><i class="icofont-close-circled"></i> Verification Failed</h5>
+                        <p>${error.message || 'Invalid or expired verification link. Please request a new one.'}</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Resend verification email
+        document.getElementById('resendBtn').addEventListener('click', async function() {
+            const btn = this;
+            const originalText = btn.textContent;
+            btn.disabled = true;
+            btn.textContent = 'Sending...';
+
+            try {
+                const userEmail = email || prompt('Please enter your email address:');
+                if (!userEmail) {
+                    btn.disabled = false;
+                    btn.textContent = originalText;
+                    return;
+                }
+
+                // This endpoint would need to be created in the backend
+                const response = await fetch(`${API.config.BASE_URL}/auth/resend-verification`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email: userEmail })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    document.getElementById('verificationMessage').innerHTML = `
+                        <div class="alert alert-success">
+                            <p>Verification email has been sent to ${userEmail}. Please check your inbox.</p>
+                        </div>
+                    `;
+                } else {
+                    throw new Error(data.message || 'Failed to send verification email');
+                }
+            } catch (error) {
+                console.error('Resend error:', error);
+                alert(error.message || 'Failed to send verification email. Please try again.');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = originalText;
+            }
+        });
+    </script>
+
+</body>
+
+</html>
+

@@ -2,12 +2,34 @@
  * API Configuration
  * Automatically detects environment and sets the appropriate base URL
  * - Production: Uses Render.com backend URL when deployed
+ * - Plesk Server: Detects Plesk domains and uses same origin
  * - Development: Uses localhost for local development
  */
 const API_CONFIG = {
-  BASE_URL: window.location.hostname.includes('vercel.app') || window.location.hostname.includes('onrender.com')
-    ? 'https://tayseerulquran.onrender.com/api'
-    : 'http://localhost:3000/api',
+  BASE_URL: (() => {
+    // Manual override (highest priority) - can be set in HTML before api.js loads
+    if (window.BACKEND_API_URL) {
+      return window.BACKEND_API_URL;
+    }
+    
+    const hostname = window.location.hostname;
+    
+    // Check if we're on Plesk server (intilaq.host, tayseerulquran.org, or plesk.page)
+    if (hostname.includes('intilaq.host') || 
+        hostname.includes('tayseerulquran.org') ||
+        hostname.includes('plesk.page')) {
+      // Use same domain for backend (if backend is on same server)
+      return window.location.origin + '/api';
+    }
+    
+    // Vercel/Render deployment
+    if (hostname.includes('vercel.app') || hostname.includes('onrender.com')) {
+      return 'https://tayseerulquran.onrender.com/api';
+    }
+    
+    // Development fallback
+    return 'http://localhost:3000/api';
+  })(),
   getAuthToken: () => localStorage.getItem('authToken'),
   setAuthToken: (token) => localStorage.setItem('authToken', token),
   removeAuthToken: () => localStorage.removeItem('authToken'),
@@ -340,6 +362,94 @@ const permissionAPI = {
   }
 };
 
+// Payment API
+const paymentAPI = {
+  getAll: async (params = {}) => {
+    const query = new URLSearchParams(params).toString();
+    return await apiRequest(`/payments${query ? `?${query}` : ''}`, { method: 'GET' });
+  },
+  
+  getById: async (id) => {
+    return await apiRequest(`/payments/${id}`, { method: 'GET' });
+  },
+  
+  create: async (paymentData) => {
+    return await apiRequest('/payments', {
+      method: 'POST',
+      body: paymentData,
+    });
+  },
+  
+  update: async (id, paymentData) => {
+    return await apiRequest(`/payments/${id}`, {
+      method: 'PUT',
+      body: paymentData,
+    });
+  },
+  
+  getUserPayments: async (userId) => {
+    return await apiRequest(`/payments/user/${userId}`, { method: 'GET' });
+  },
+  
+  getMyPayments: async () => {
+    return await apiRequest('/payments/me/payments', { method: 'GET' });
+  },
+  
+  processPayment: async (paymentData) => {
+    return await apiRequest('/payments/process', {
+      method: 'POST',
+      body: paymentData,
+    });
+  },
+  
+  refund: async (paymentId, refundData) => {
+    return await apiRequest(`/payments/${paymentId}/refund`, {
+      method: 'POST',
+      body: refundData,
+    });
+  },
+  
+  getReceipt: async (paymentId) => {
+    return await apiRequest(`/payments/${paymentId}/receipt`, { method: 'GET' });
+  }
+};
+
+// Enrollment API
+const enrollmentAPI = {
+  enroll: async (courseId, paymentData = null) => {
+    return await apiRequest('/enrollments', {
+      method: 'POST',
+      body: { courseId, paymentData },
+    });
+  },
+  
+  getMyEnrollments: async () => {
+    return await apiRequest('/enrollments/me', { method: 'GET' });
+  },
+  
+  getAll: async (params = {}) => {
+    const query = new URLSearchParams(params).toString();
+    return await apiRequest(`/enrollments${query ? `?${query}` : ''}`, { method: 'GET' });
+  },
+  
+  getById: async (id) => {
+    return await apiRequest(`/enrollments/${id}`, { method: 'GET' });
+  },
+  
+  cancel: async (id) => {
+    return await apiRequest(`/enrollments/${id}`, {
+      method: 'DELETE',
+    });
+  },
+  
+  update: async (id, enrollmentData) => {
+    return await apiRequest(`/enrollments/${id}`, {
+      method: 'PUT',
+      body: enrollmentData,
+    });
+  }
+};
+
 /**
  * Main API Object
  * Exports all API methods and configuration for use across the application
@@ -354,6 +464,8 @@ window.API = {
   blog: blogAPI,
   role: roleAPI,
   permission: permissionAPI,
+  payment: paymentAPI,
+  enrollment: enrollmentAPI,
   config: API_CONFIG
 };
 

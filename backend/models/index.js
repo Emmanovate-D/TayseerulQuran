@@ -113,6 +113,28 @@ const defineAssociations = () => {
     as: 'payments'
   });
 
+  // StudentCourse - User (Many-to-One)
+  StudentCourse.belongsTo(User, {
+    foreignKey: 'studentId',
+    as: 'User'
+  });
+  
+  User.hasMany(StudentCourse, {
+    foreignKey: 'studentId',
+    as: 'enrollments'
+  });
+
+  // StudentCourse - Course (Many-to-One)
+  StudentCourse.belongsTo(Course, {
+    foreignKey: 'courseId',
+    as: 'Course'
+  });
+  
+  Course.hasMany(StudentCourse, {
+    foreignKey: 'courseId',
+    as: 'enrollments'
+  });
+
   // BlogPost - User (Many-to-One)
   BlogPost.belongsTo(User, {
     foreignKey: 'authorId',

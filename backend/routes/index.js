@@ -7,6 +7,7 @@ const studentRoutes = require('./studentRoutes');
 const tutorRoutes = require('./tutorRoutes');
 const blogRoutes = require('./blogRoutes');
 const paymentRoutes = require('./paymentRoutes');
+const enrollmentRoutes = require('./enrollmentRoutes');
 const adminRoutes = require('./adminRoutes');
 
 // Health check route
@@ -26,6 +27,7 @@ router.use('/students', studentRoutes);
 router.use('/tutors', tutorRoutes);
 router.use('/blog', blogRoutes);
 router.use('/payments', paymentRoutes);
+router.use('/enrollments', enrollmentRoutes);
 router.use('/admin', adminRoutes);
 
 module.exports = router;

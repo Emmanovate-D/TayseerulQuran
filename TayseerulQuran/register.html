@@ -768,10 +768,10 @@
                     .text('Registration successful! Redirecting...')
                     .show();
                 
-                // Redirect to home page (new users are students by default)
-                console.log('Redirecting to index.html');
+                // Redirect to courses page after successful registration
+                console.log('Redirecting to courses.html');
                 setTimeout(() => {
-                    window.location.href = 'index.html';
+                    window.location.href = 'courses.html';
                 }, 1500);
                 
             } catch (error) {

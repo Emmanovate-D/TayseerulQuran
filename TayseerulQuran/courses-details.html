@@ -1018,8 +1018,28 @@
             $('#courseDescription').html('<p style="color: #dc3545;">' + message + '</p>');
         }
         
-        // Enrollment handler
-        $('#enrollButton').on('click', async function() {
+        // Check if user is already enrolled
+        async function checkEnrollmentStatus() {
+            try {
+                if (typeof API === 'undefined' || typeof API.enrollment === 'undefined') {
+                    return false;
+                }
+                
+                const response = await API.enrollment.getMyEnrollments();
+                const enrollments = response.data?.enrollments || response.data || response || [];
+                const courseId = currentCourse.id;
+                
+                return enrollments.some(enrollment => 
+                    enrollment.courseId === courseId || enrollment.course?.id === courseId
+                );
+            } catch (error) {
+                console.error('Error checking enrollment status:', error);
+                return false;
+            }
+        }
+        
+        // Enrollment handler - redirect to enrollment flow
+        $('#enrollButton').on('click', function() {
             if (!currentCourse) {
                 alert('Course information not loaded. Please refresh the page.');
                 return;
@@ -1028,50 +1048,25 @@
             // Check if user is logged in
             const user = API.config.getUser();
             if (!user) {
-                alert('Please login to enroll in this course.');
-                window.location.href = 'login.html?redirect=courses-details.html?id=' + courseId;
+                // Redirect to login with return URL
+                window.location.href = 'login.html?redirect=enroll.html?course=' + currentCourse.id;
                 return;
             }
             
-            const button = $(this);
-            const originalText = button.text();
-            button.prop('disabled', true).text('Enrolling...');
-            
-            const messageDiv = $('#enrollMessage');
-            messageDiv.hide();
-            
-            try {
-                await API.student.enroll(currentCourse.id);
-                
-                messageDiv.removeClass('error')
-                    .addClass('success')
-                    .css('background-color', '#d4edda')
-                    .css('color', '#155724')
-                    .css('border', '1px solid #c3e6cb')
-                    .text('Successfully enrolled! Redirecting...')
-                    .show();
-                
-                // Update enrollment count
-                const currentCount = parseInt($('#enrollmentCount').text()) || 0;
-                $('#enrollmentCount').text((currentCount + 1) + ' Enrolled Students');
-                
-                // Redirect after short delay
-                setTimeout(() => {
+            // Check if already enrolled
+            checkEnrollmentStatus().then(isEnrolled => {
+                if (isEnrolled) {
+                    alert('You are already enrolled in this course.');
                     window.location.href = 'after-enroll.html?courseId=' + currentCourse.id;
-                }, 1500);
-                
-            } catch (error) {
-                console.error('Enrollment error:', error);
-                messageDiv.removeClass('success')
-                    .addClass('error')
-                    .css('background-color', '#f8d7da')
-                    .css('color', '#721c24')
-                    .css('border', '1px solid #f5c6cb')
-                    .text(error.message || 'Failed to enroll. Please try again.')
-                    .show();
-                
-                button.prop('disabled', false).text(originalText);
-            }
+                } else {
+                    // Redirect to enrollment page
+                    window.location.href = 'enroll.html?course=' + currentCourse.id;
+                }
+            }).catch(error => {
+                console.error('Error checking enrollment:', error);
+                // Proceed to enrollment page anyway
+                window.location.href = 'enroll.html?course=' + currentCourse.id;
+            });
         });
         
         // Load course details on page load

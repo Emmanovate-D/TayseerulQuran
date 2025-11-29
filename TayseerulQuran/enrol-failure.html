@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <title>Enrollment Failed - TayseerulQuran</title>
+    <meta name="robots" content="noindex, follow" />
+    <meta name="description" content="Your course enrollment could not be completed">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="shortcut icon" type="image/x-icon" href="assets/images/favicon.ico">
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="assets/css/plugins/icofont.min.css">
+    <link rel="stylesheet" href="assets/css/plugins/flaticon.css">
+    <link rel="stylesheet" href="assets/css/plugins/font-awesome.min.css">
+    <link rel="stylesheet" href="assets/css/style.css">
+</head>
+
+<body>
+
+    <div class="main-wrapper">
+
+        <!-- Header Section Start -->
+        <div class="header-section">
+            <div class="header-main">
+                <div class="container">
+                    <div class="header-main-wrapper">
+                        <div class="header-logo">
+                            <a href="index.html"><img src="assets/images/logo.png" alt="Logo"></a>
+                        </div>
+                        <div class="header-menu d-none d-lg-block">
+                            <ul class="nav-menu">
+                                <li><a href="index.html">Home</a></li>
+                                <li><a href="courses.html">All Courses</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Header Section End -->
+
+        <!-- Failure Section Start -->
+        <div class="section section-padding">
+            <div class="container">
+                <div class="row justify-content-center">
+                    <div class="col-lg-8">
+                        <div class="card text-center">
+                            <div class="card-body py-5">
+                                <div class="mb-4">
+                                    <div class="error-icon" style="width: 100px; height: 100px; margin: 0 auto; background: #dc3545; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                                        <i class="icofont-close-line" style="font-size: 60px; color: white;"></i>
+                                    </div>
+                                </div>
+                                
+                                <h2 class="mb-3">Enrollment Failed</h2>
+                                
+                                <div id="errorMessage" class="mb-4">
+                                    <p class="text-danger">We're sorry, but your enrollment could not be completed at this time.</p>
+                                </div>
+
+                                <div id="errorDetails" class="alert alert-danger mb-4" style="display: none;">
+                                    <!-- Error details will be shown here -->
+                                </div>
+
+                                <div class="mb-4">
+                                    <h5>What you can do:</h5>
+                                    <ul class="list-unstyled text-start" style="max-width: 400px; margin: 0 auto;">
+                                        <li class="mb-2"><i class="icofont-check-circled text-success"></i> Check your payment information and try again</li>
+                                        <li class="mb-2"><i class="icofont-check-circled text-success"></i> Contact our support team for assistance</li>
+                                        <li class="mb-2"><i class="icofont-check-circled text-success"></i> Try a different payment method</li>
+                                    </ul>
+                                </div>
+
+                                <div class="d-grid gap-2 d-md-flex justify-content-md-center">
+                                    <a href="checkout.html" class="btn btn-primary btn-lg" id="retryBtn">Try Again</a>
+                                    <a href="courses.html" class="btn btn-outline-primary btn-lg">Browse Courses</a>
+                                    <a href="contact.html" class="btn btn-outline-secondary btn-lg">Contact Support</a>
+                                </div>
+
+                                <div class="mt-4">
+                                    <p class="text-muted small">
+                                        <i class="icofont-envelope"></i> If you were charged, please contact support with your payment reference.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Failure Section End -->
+
+        <!-- Footer Start -->
+        <div class="section footer-section">
+            <div class="footer-copyright">
+                <div class="container">
+                    <div class="copyright-wrapper">
+                        <div class="copyright-text">
+                            <p>&copy; 2025 <span>Tayseer ul Qur'an</span></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Footer End -->
+
+        <a href="#" class="back-to-top"><i class="icofont-simple-up"></i></a>
+
+    </div>
+
+    <!-- JS -->
+    <script src="assets/js/vendor/modernizr-3.11.2.min.js"></script>
+    <script src="assets/js/vendor/jquery-3.5.1.min.js"></script>
+    <script src="assets/js/plugins.min.js"></script>
+    <script src="assets/js/main.js"></script>
+    <script src="assets/js/api.js"></script>
+
+    <script>
+        // Load error details from URL
+        function loadErrorDetails() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const error = urlParams.get('error');
+            const message = urlParams.get('message');
+            const paymentId = urlParams.get('payment');
+
+            const errorMessageDiv = document.getElementById('errorMessage');
+            const errorDetailsDiv = document.getElementById('errorDetails');
+
+            if (error || message) {
+                const errorText = decodeURIComponent(message || error || 'An unknown error occurred');
+                errorMessageDiv.innerHTML = `<p class="text-danger">${errorText}</p>`;
+                
+                if (paymentId) {
+                    errorDetailsDiv.innerHTML = `<p><strong>Payment ID:</strong> ${paymentId}</p>`;
+                    errorDetailsDiv.style.display = 'block';
+                }
+            }
+
+            // Set retry button URL
+            const retryBtn = document.getElementById('retryBtn');
+            if (paymentId) {
+                retryBtn.href = `checkout.html?payment=${paymentId}`;
+            } else {
+                // Try to get course from session storage
+                const stored = sessionStorage.getItem('pendingEnrollment');
+                if (stored) {
+                    const enrollmentData = JSON.parse(stored);
+                    retryBtn.href = `checkout.html?course=${enrollmentData.courseId}`;
+                }
+            }
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            loadErrorDetails();
+        });
+    </script>
+
+</body>
+
+</html>
+

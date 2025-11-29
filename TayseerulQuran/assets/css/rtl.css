@@ -1,0 +1,301 @@
+/**
+ * RTL (Right-to-Left) Support for Arabic Content
+ * TayseerulQuran - Quran and Arabic Learning Platform
+ */
+
+/* RTL Direction */
+[dir="rtl"],
+.rtl {
+  direction: rtl;
+  text-align: right;
+}
+
+/* RTL Layout Adjustments */
+[dir="rtl"] .container,
+[dir="rtl"] .row,
+.rtl .container,
+.rtl .row {
+  direction: rtl;
+}
+
+/* Header RTL */
+[dir="rtl"] .header-main-wrapper,
+.rtl .header-main-wrapper {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .header-menu,
+.rtl .header-menu {
+  margin-right: auto;
+  margin-left: 0;
+}
+
+[dir="rtl"] .header-sign-in-up,
+.rtl .header-sign-in-up {
+  margin-left: auto;
+  margin-right: 0;
+}
+
+/* Navigation RTL */
+[dir="rtl"] .nav-menu,
+.rtl .nav-menu {
+  text-align: right;
+}
+
+[dir="rtl"] .sub-menu,
+.rtl .sub-menu {
+  right: auto;
+  left: 0;
+  text-align: right;
+}
+
+/* Breadcrumb RTL */
+[dir="rtl"] .breadcrumb,
+.rtl .breadcrumb {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .breadcrumb li:not(:last-child)::after,
+.rtl .breadcrumb li:not(:last-child)::after {
+  content: "←";
+  margin-left: 0;
+  margin-right: 0.5rem;
+}
+
+/* Forms RTL */
+[dir="rtl"] .form-control,
+[dir="rtl"] .form-select,
+[dir="rtl"] .form-check-input,
+.rtl .form-control,
+.rtl .form-select,
+.rtl .form-check-input {
+  text-align: right;
+}
+
+[dir="rtl"] .input-group,
+.rtl .input-group {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .form-check,
+.rtl .form-check {
+  padding-right: 1.5em;
+  padding-left: 0;
+}
+
+[dir="rtl"] .form-check-input,
+.rtl .form-check-input {
+  margin-right: -1.5em;
+  margin-left: 0;
+  float: right;
+}
+
+/* Buttons RTL */
+[dir="rtl"] .btn-group,
+.rtl .btn-group {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .btn i,
+[dir="rtl"] .btn .icofont,
+.rtl .btn i,
+.rtl .btn .icofont {
+  margin-right: 0;
+  margin-left: 0.5rem;
+}
+
+[dir="rtl"] .btn i:first-child,
+[dir="rtl"] .btn .icofont:first-child,
+.rtl .btn i:first-child,
+.rtl .btn .icofont:first-child {
+  margin-left: 0;
+  margin-right: 0.5rem;
+}
+
+/* Cards RTL */
+[dir="rtl"] .card-body,
+.rtl .card-body {
+  text-align: right;
+}
+
+/* Tables RTL */
+[dir="rtl"] table,
+.rtl table {
+  direction: rtl;
+}
+
+[dir="rtl"] .table th,
+[dir="rtl"] .table td,
+.rtl .table th,
+.rtl .table td {
+  text-align: right;
+}
+
+/* Dropdown RTL */
+[dir="rtl"] .dropdown-menu,
+.rtl .dropdown-menu {
+  right: 0;
+  left: auto;
+  text-align: right;
+}
+
+/* Pagination RTL */
+[dir="rtl"] .pagination,
+.rtl .pagination {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .page-link,
+.rtl .page-link {
+  text-align: center;
+}
+
+/* Modal RTL */
+[dir="rtl"] .modal-header,
+.rtl .modal-header {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .modal-footer,
+.rtl .modal-footer {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .modal-header .btn-close,
+.rtl .modal-header .btn-close {
+  margin-left: 0;
+  margin-right: auto;
+}
+
+/* Sidebar RTL */
+[dir="rtl"] .sidebar-wrapper,
+.rtl .sidebar-wrapper {
+  right: 0;
+  left: auto;
+}
+
+[dir="rtl"] .page-content-wrapper,
+.rtl .page-content-wrapper {
+  margin-right: 80px;
+  margin-left: 0;
+}
+
+/* Admin Dashboard RTL */
+[dir="rtl"] .admin-tab-menu,
+.rtl .admin-tab-menu {
+  right: 0;
+  left: auto;
+}
+
+[dir="rtl"] .main-content-wrapper,
+.rtl .main-content-wrapper {
+  margin-right: 200px;
+  margin-left: 0;
+}
+
+/* Course Cards RTL */
+[dir="rtl"] .courses-content,
+.rtl .courses-content {
+  text-align: right;
+}
+
+[dir="rtl"] .courses-author,
+.rtl .courses-author {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .courses-price-review,
+.rtl .courses-price-review {
+  flex-direction: row-reverse;
+}
+
+/* Footer RTL */
+[dir="rtl"] .footer-widget,
+.rtl .footer-widget {
+  text-align: right;
+}
+
+[dir="rtl"] .widget-link,
+.rtl .widget-link {
+  text-align: right;
+}
+
+/* Language Toggle */
+.language-toggle {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1000;
+  background: #fff;
+  border-radius: 50px;
+  padding: 8px 16px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.language-toggle button {
+  background: none;
+  border: none;
+  padding: 5px 10px;
+  cursor: pointer;
+  font-weight: 500;
+  color: #666;
+  transition: all 0.3s;
+}
+
+.language-toggle button.active {
+  color: #007bff;
+  background: #e7f3ff;
+  border-radius: 5px;
+}
+
+.language-toggle button:hover {
+  color: #007bff;
+}
+
+/* Arabic Font Support */
+[dir="rtl"] body,
+.rtl body {
+  font-family: 'Cairo', 'Tajawal', 'Arial', sans-serif;
+}
+
+/* RTL Utilities */
+.rtl-text-right {
+  text-align: right !important;
+}
+
+.rtl-text-left {
+  text-align: left !important;
+}
+
+.rtl-float-right {
+  float: right !important;
+}
+
+.rtl-float-left {
+  float: left !important;
+}
+
+.rtl-mr-auto {
+  margin-right: auto !important;
+}
+
+.rtl-ml-auto {
+  margin-left: auto !important;
+}
+
+/* Responsive RTL */
+@media (max-width: 768px) {
+  [dir="rtl"] .main-content-wrapper,
+  .rtl .main-content-wrapper {
+    margin-right: 0;
+  }
+  
+  [dir="rtl"] .page-content-wrapper,
+  .rtl .page-content-wrapper {
+    margin-right: 0;
+  }
+}
+
