@@ -113,6 +113,8 @@
                                         <li><a href="courses-details.html">Courses Details</a></li>
                                     </ul>
                                 </li>
+                                                  </ul>
+                                </li>
                                 <li>
                                     <a href="#">Pages </a>
                                     <ul class="sub-menu">
@@ -397,31 +399,33 @@
                                 <h3 class="title">Get in Touch <span>With Us</span></h3>
 
                                 <div class="form-wrapper">
-                                    <form id="contact-form" action="https://htmlmail.hasthemes.com/humayun/tayseerulquran-contact.php" method="POST">
+                                    <form id="contact-form">
                                         <!-- Single Form Start -->
                                         <div class="single-form">
-                                            <input type="text" name="name" placeholder="Name">
+                                            <input type="text" name="name" id="contact-name" placeholder="Name" required>
                                         </div>
                                         <!-- Single Form End -->
                                         <!-- Single Form Start -->
                                         <div class="single-form">
-                                            <input type="email" name="email" placeholder="Email">
+                                            <input type="email" name="email" id="contact-email" placeholder="Email" required>
                                         </div>
                                         <!-- Single Form End -->
                                         <!-- Single Form Start -->
                                         <div class="single-form">
-                                            <input type="text" name="subject" placeholder="Subject">
+                                            <input type="text" name="subject" id="contact-subject" placeholder="Subject">
                                         </div>
                                         <!-- Single Form End -->
                                         <!-- Single Form Start -->
                                         <div class="single-form">
-                                            <textarea name="message" placeholder="Message"></textarea>
+                                            <textarea name="message" id="contact-message" placeholder="Message" required></textarea>
                                         </div>
                                         <!-- Single Form End -->
-                                        <p class="form-message"></p>
+                                        <p class="form-message" id="contact-form-message"></p>
                                         <!-- Single Form Start -->
                                         <div class="single-form">
-                                            <button class="btn btn-primary btn-hover-dark w-100">Send Message <i class="flaticon-right"></i></button>
+                                            <button type="submit" class="btn btn-primary btn-hover-dark w-100" id="contact-submit-btn">
+                                                <span class="btn-text">Send Message</span> <i class="flaticon-right"></i>
+                                            </button>
                                         </div>
                                         <!-- Single Form End -->
                                     </form>
@@ -647,8 +651,105 @@
 
     <!-- Main JS -->
     <script src="assets/js/main.js"></script>
+    <script src="assets/js/api.js"></script>
+    <script>
+        // Contact form submission
+        document.addEventListener('DOMContentLoaded', function() {
+            const contactForm = document.getElementById('contact-form');
+            const submitBtn = document.getElementById('contact-submit-btn');
+            const messageEl = document.getElementById('contact-form-message');
+            
+            if (contactForm) {
+                contactForm.addEventListener('submit', async function(e) {
+                    e.preventDefault();
+                    
+                    // Get form values
+                    const name = document.getElementById('contact-name').value.trim();
+                    const email = document.getElementById('contact-email').value.trim();
+                    const subject = document.getElementById('contact-subject').value.trim();
+                    const message = document.getElementById('contact-message').value.trim();
+                    
+                    // Basic validation
+                    if (!name || !email || !message) {
+                        showMessage('Please fill in all required fields (Name, Email, Message).', 'error');
+                        return;
+                    }
+                    
+                    // Email validation
+                    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                    if (!emailRegex.test(email)) {
+                        showMessage('Please enter a valid email address.', 'error');
+                        return;
+                    }
+                    
+                    // Disable submit button
+                    const originalBtnText = submitBtn.querySelector('.btn-text').textContent;
+                    submitBtn.disabled = true;
+                    submitBtn.querySelector('.btn-text').textContent = 'Sending...';
+                    
+                    try {
+                        // Wait for API to be available
+                        if (typeof API === 'undefined' || !API.contact) {
+                            // Retry after a short delay
+                            await new Promise(resolve => setTimeout(resolve, 500));
+                            if (typeof API === 'undefined' || !API.contact) {
+                                throw new Error('API not loaded. Please refresh the page and try again.');
+                            }
+                        }
+                        
+                        const response = await API.contact.submit({
+                            name,
+                            email,
+                            subject: subject || undefined,
+                            message
+                        });
+                        
+                        if (response.success) {
+                            showMessage(response.message || 'Thank you for contacting us! We will get back to you soon.', 'success');
+                            contactForm.reset();
+                        } else {
+                            showMessage(response.message || 'Failed to send message. Please try again.', 'error');
+                        }
+                    } catch (error) {
+                        console.error('Error submitting contact form:', error);
+                        showMessage(error.message || 'Failed to send message. Please try again.', 'error');
+                    } finally {
+                        // Re-enable submit button
+                        submitBtn.disabled = false;
+                        submitBtn.querySelector('.btn-text').textContent = originalBtnText;
+                    }
+                });
+            }
+            
+            function showMessage(message, type) {
+                if (!messageEl) return;
+                
+                messageEl.textContent = message;
+                messageEl.className = 'form-message';
+                
+                if (type === 'success') {
+                    messageEl.style.color = '#28a745';
+                    messageEl.style.fontWeight = '500';
+                } else if (type === 'error') {
+                    messageEl.style.color = '#dc3545';
+                    messageEl.style.fontWeight = '500';
+                } else {
+                    messageEl.style.color = '#6c757d';
+                }
+                
+                // Scroll to message
+                messageEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                
+                // Clear message after 5 seconds for success messages
+                if (type === 'success') {
+                    setTimeout(() => {
+                        messageEl.textContent = '';
+                    }, 5000);
+                }
+            }
+        });
+    </script>
 
 </body>
 
 </html>
-       

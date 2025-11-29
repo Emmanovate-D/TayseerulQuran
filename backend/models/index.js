@@ -10,6 +10,7 @@ const Tutor = require('./Tutor');
 const BlogPost = require('./BlogPost');
 const Payment = require('./Payment');
 const StudentCourse = require('./StudentCourse');
+const Contact = require('./Contact');
 
 // Define associations
 const defineAssociations = () => {
@@ -162,6 +163,7 @@ module.exports = {
   Tutor,
   BlogPost,
   Payment,
-  StudentCourse
+  StudentCourse,
+  Contact
 };
 

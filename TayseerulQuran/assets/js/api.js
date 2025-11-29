@@ -450,6 +450,38 @@ const enrollmentAPI = {
   }
 };
 
+// Contact API
+const contactAPI = {
+  submit: async (contactData) => {
+    return await apiRequest('/contact', {
+      method: 'POST',
+      body: contactData,
+    });
+  },
+  
+  getAll: async (params = {}) => {
+    const query = new URLSearchParams(params).toString();
+    return await apiRequest(`/contact${query ? `?${query}` : ''}`, { method: 'GET' });
+  },
+  
+  getById: async (id) => {
+    return await apiRequest(`/contact/${id}`, { method: 'GET' });
+  },
+  
+  updateStatus: async (id, statusData) => {
+    return await apiRequest(`/contact/${id}`, {
+      method: 'PUT',
+      body: statusData,
+    });
+  },
+  
+  delete: async (id) => {
+    return await apiRequest(`/contact/${id}`, {
+      method: 'DELETE',
+    });
+  }
+};
+
 /**
  * Main API Object
  * Exports all API methods and configuration for use across the application
@@ -466,6 +498,7 @@ window.API = {
   permission: permissionAPI,
   payment: paymentAPI,
   enrollment: enrollmentAPI,
+  contact: contactAPI,
   config: API_CONFIG
 };
 

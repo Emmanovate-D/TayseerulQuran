@@ -154,9 +154,9 @@
                                     </div>
                                 </div>
                                 <div class="d-flex gap-2">
-                                    <button class="btn btn-sm btn-primary px-3 py-2 small" onclick="filterPayments()" style="font-size: 0.75rem;">
-                                        <i class="icofont-filter me-1"></i> Apply Filters
-                                    </button>
+                                <button class="btn btn-sm btn-primary px-3 py-2 small" onclick="filterPayments()" style="font-size: 0.75rem;">
+                                    <i class="icofont-filter me-1"></i> Apply Filters
+                                </button>
                                     <button class="btn btn-sm btn-secondary px-3 py-2 small" onclick="clearFilters()" style="font-size: 0.75rem;">
                                         <i class="icofont-refresh me-1"></i> Clear Filters
                                     </button>
@@ -605,15 +605,15 @@
                 const dateTo = $('#filterDateTo').val();
                 const studentId = $('#filterStudent').val();
                 const courseId = $('#filterCourse').val();
-                
-                currentFilters = {};
-                if (dateFrom) currentFilters.dateFrom = dateFrom;
-                if (dateTo) currentFilters.dateTo = dateTo;
+            
+            currentFilters = {};
+            if (dateFrom) currentFilters.dateFrom = dateFrom;
+            if (dateTo) currentFilters.dateTo = dateTo;
                 if (studentId && studentId !== 'all') currentFilters.userId = studentId;
                 if (courseId && courseId !== 'all') currentFilters.courseId = courseId;
-                
-                currentPage = 1;
-                await loadPayments(currentPage, currentFilters);
+            
+            currentPage = 1;
+            await loadPayments(currentPage, currentFilters);
                 showMessage('Filters applied successfully!', 'success');
             } catch (error) {
                 console.error('Error applying filters:', error);
@@ -823,7 +823,7 @@
                 // Load filter options and then load payments
                 loadFilterOptions().then(() => {
                     loadPayments(currentPage, currentFilters);
-                    loadPaymentStats();
+                loadPaymentStats();
                 });
             }
             

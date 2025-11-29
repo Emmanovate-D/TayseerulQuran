@@ -9,6 +9,7 @@ const blogRoutes = require('./blogRoutes');
 const paymentRoutes = require('./paymentRoutes');
 const enrollmentRoutes = require('./enrollmentRoutes');
 const adminRoutes = require('./adminRoutes');
+const contactRoutes = require('./contactRoutes');
 
 // Health check route
 router.get('/health', (req, res) => {
@@ -29,6 +30,7 @@ router.use('/blog', blogRoutes);
 router.use('/payments', paymentRoutes);
 router.use('/enrollments', enrollmentRoutes);
 router.use('/admin', adminRoutes);
+router.use('/contact', contactRoutes);
 
 module.exports = router;
 
