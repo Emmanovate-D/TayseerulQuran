@@ -95,7 +95,7 @@ const startServer = async () => {
     // Explicitly ensure all tables exist (they might not be created by sync)
     // This runs regardless of whether the main sync succeeded or failed
     console.log('🔄 Ensuring all tables exist...');
-    const { UserRole, RolePermission, StudentCourse, BlogPost, Course, Payment, Student, Tutor } = require('./models');
+    const { UserRole, RolePermission, StudentCourse, BlogPost, Course, Payment, Student, Tutor, Contact } = require('./models');
     
     // Sync junction tables
     try {
@@ -120,7 +120,7 @@ const startServer = async () => {
     }
     
     // Sync main tables
-    console.log('🔄 Syncing main tables (BlogPost, Course, Payment, Student, Tutor)...');
+    console.log('🔄 Syncing main tables (BlogPost, Course, Payment, Student, Tutor, Contact)...');
     
     try {
       await BlogPost.sync({ alter: false });
@@ -181,6 +181,13 @@ const startServer = async () => {
       console.log('✅ Tutor table synced');
     } catch (err) {
       console.error('⚠️  Tutor sync error:', err.message);
+    }
+    
+    try {
+      await Contact.sync({ alter: false });
+      console.log('✅ Contact table synced');
+    } catch (err) {
+      console.error('⚠️  Contact sync error:', err.message);
     }
     
     console.log('✅ All tables verified');
