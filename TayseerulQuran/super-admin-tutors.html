@@ -22,6 +22,43 @@
     <link rel="stylesheet" href="assets/css/plugins/magnific-popup.css">
     <link rel="stylesheet" href="assets/css/plugins/nice-select.css">
     <link rel="stylesheet" href="assets/css/style.css">
+    <style>
+        /* Fix Admin Tab Menu on the left side */
+        .admin-tab-menu {
+            position: fixed;
+            left: 80px;
+            top: 80px;
+            bottom: 0;
+            width: 200px;
+            background: #fff;
+            padding: 20px 0;
+            z-index: 100;
+            overflow-y: auto;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+        }
+        
+        .page-content-wrapper {
+            margin-left: 200px;
+        }
+        
+        .main-content-wrapper {
+            padding-left: 20px;
+        }
+        
+        @media (max-width: 768px) {
+            .admin-tab-menu {
+                position: relative;
+                left: 0;
+                top: 0;
+                width: 100%;
+                margin-bottom: 20px;
+            }
+            
+            .page-content-wrapper {
+                margin-left: 0;
+            }
+        }
+    </style>
 </head>
 
 <body>
@@ -64,7 +101,6 @@
                     <a href="super-admin-payments.html" title="Payments" data-permission="view_payments"><img src="assets/images/menu-icon/icon-5.png" alt="Icon"></a>
                     <a href="super-admin-roles.html" title="Admin Roles" data-role="super_admin"><img src="assets/images/menu-icon/icon-1.png" alt="Icon"></a>
                     <a href="super-admin-blog.html" title="Blog" data-permission="view_blog_posts"><img src="assets/images/menu-icon/icon-2.png" alt="Icon"></a>
-                    <a href="super-admin-content.html" title="Content" data-permission="view_all_pages"><img src="assets/images/menu-icon/icon-3.png" alt="Icon"></a>
                 </div>
             </div>
 

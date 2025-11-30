@@ -24,6 +24,43 @@
     <link rel="stylesheet" href="assets/css/plugins/apexcharts.css">
     <link rel="stylesheet" href="assets/css/plugins/jqvmap.min.css">
     <link rel="stylesheet" href="assets/css/style.css">
+    <style>
+        /* Fix Admin Tab Menu on the left side */
+        .admin-tab-menu {
+            position: fixed;
+            left: 80px;
+            top: 80px;
+            bottom: 0;
+            width: 200px;
+            background: #fff;
+            padding: 20px 0;
+            z-index: 100;
+            overflow-y: auto;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+        }
+        
+        .page-content-wrapper {
+            margin-left: 200px;
+        }
+        
+        .main-content-wrapper {
+            padding-left: 20px;
+        }
+        
+        @media (max-width: 768px) {
+            .admin-tab-menu {
+                position: relative;
+                left: 0;
+                top: 0;
+                width: 100%;
+                margin-bottom: 20px;
+            }
+            
+            .page-content-wrapper {
+                margin-left: 0;
+            }
+        }
+    </style>
 </head>
 
 <body>
