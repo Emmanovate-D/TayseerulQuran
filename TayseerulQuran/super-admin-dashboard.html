@@ -25,26 +25,51 @@
     <link rel="stylesheet" href="assets/css/plugins/jqvmap.min.css">
     <link rel="stylesheet" href="assets/css/style.css">
     <style>
-        /* Fix Admin Tab Menu on the left side */
+        /* Admin Tab Menu as Main Sidebar */
         .admin-tab-menu {
             position: fixed;
-            left: 80px;
+            left: 0;
             top: 80px;
             bottom: 0;
-            width: 200px;
+            width: 250px;
             background: #fff;
             padding: 20px 0;
             z-index: 100;
             overflow-y: auto;
             box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+            border-right: 1px solid #e9ecef;
+        }
+        
+        .admin-tab-menu a {
+            display: block;
+            padding: 12px 25px;
+            color: #495057;
+            text-decoration: none;
+            border-left: 3px solid transparent;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            font-size: 14px;
+        }
+        
+        .admin-tab-menu a:hover {
+            background-color: #f8f9fa;
+            color: #007bff;
+            border-left-color: #007bff;
+        }
+        
+        .admin-tab-menu a.active {
+            background-color: #e7f3ff;
+            color: #007bff;
+            border-left-color: #007bff;
+            font-weight: 600;
         }
         
         .page-content-wrapper {
-            margin-left: 200px;
+            margin-left: 250px;
         }
         
         .main-content-wrapper {
-            padding-left: 20px;
+            padding: 20px;
         }
         
         @media (max-width: 768px) {
@@ -54,6 +79,7 @@
                 top: 0;
                 width: 100%;
                 margin-bottom: 20px;
+                max-height: 300px;
             }
             
             .page-content-wrapper {
@@ -137,24 +163,10 @@
 
         <!-- Super Admin Dashboard Start -->
         <div class="section overflow-hidden position-relative" id="wrapper">
-            <!-- Sidebar Wrapper Start -->
-            <div class="sidebar-wrapper">
-                <div class="menu-list">
-                    <a class="active" href="super-admin-dashboard.html" title="Dashboard"><img src="assets/images/menu-icon/icon-3.png" alt="Icon"></a>
-                    <a href="super-admin-courses.html" title="Courses" data-permission="view_courses"><img src="assets/images/menu-icon/icon-1.png" alt="Icon"></a>
-                    <a href="super-admin-students.html" title="Students" data-permission="view_students"><img src="assets/images/menu-icon/icon-2.png" alt="Icon"></a>
-                    <a href="super-admin-tutors.html" title="Tutors" data-permission="view_tutors"><img src="assets/images/menu-icon/icon-4.png" alt="Icon"></a>
-                    <a href="super-admin-payments.html" title="Payments" data-permission="view_payments"><img src="assets/images/menu-icon/icon-5.png" alt="Icon"></a>
-                    <a href="super-admin-roles.html" title="Admin Roles" data-role="super_admin"><img src="assets/images/menu-icon/icon-1.png" alt="Icon"></a>
-                    <a href="super-admin-blog.html" title="Blog" data-permission="view_blog_posts"><img src="assets/images/menu-icon/icon-2.png" alt="Icon"></a>
-                </div>
-            </div>
-            <!-- Sidebar Wrapper End -->
-
             <div class="page-content-wrapper py-0">
-                <!-- Admin Tab Menu Start -->
+                <!-- Admin Tab Menu Start - Main Sidebar -->
                 <div class="nav flex-column nav-pills admin-tab-menu">
-                    <a href="super-admin-dashboard.html" class="active">Dashboard</a>
+                    <a href="super-admin-dashboard.html">Dashboard</a>
                     <a href="super-admin-courses.html" data-permission="view_courses">Courses</a>
                     <a href="super-admin-students.html" data-permission="view_students">Students</a>
                     <a href="super-admin-tutors.html" data-permission="view_tutors">Tutors</a>
@@ -825,8 +837,23 @@
             }
         }
         
+        // Set active menu item based on current page
+        function setActiveMenuItem() {
+            const currentPage = window.location.pathname.split('/').pop() || window.location.href.split('/').pop();
+            $('.admin-tab-menu a').removeClass('active');
+            $('.admin-tab-menu a').each(function() {
+                const href = $(this).attr('href');
+                if (href === currentPage || (currentPage === '' && href === 'super-admin-dashboard.html')) {
+                    $(this).addClass('active');
+                }
+            });
+        }
+
         // Load stats and payments on page load
         $(document).ready(function() {
+            // Set active menu item
+            setActiveMenuItem();
+            
             // Wait for jQuery to be fully loaded
             if (typeof jQuery === 'undefined') {
                 console.error('jQuery not loaded, retrying...');
