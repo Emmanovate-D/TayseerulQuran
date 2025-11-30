@@ -127,6 +127,7 @@ const getMyEnrollments = async (req, res) => {
       include: [
         {
           model: Course,
+          as: 'Course',
           attributes: ['id', 'title', 'description', 'shortDescription', 'price', 'duration', 'level', 'category', 'thumbnail', 'rating', 'enrollmentCount'],
           required: false
         }
@@ -185,11 +186,13 @@ const getAllEnrollments = async (req, res) => {
       include: [
         {
           model: User,
+          as: 'User',
           attributes: ['id', 'firstName', 'lastName', 'email', 'phone'],
           required: false
         },
         {
           model: Course,
+          as: 'Course',
           attributes: ['id', 'title', 'price', 'category'],
           required: false
         }
@@ -237,11 +240,13 @@ const getEnrollmentById = async (req, res) => {
       include: [
         {
           model: User,
+          as: 'User',
           attributes: ['id', 'firstName', 'lastName', 'email', 'phone'],
           required: false
         },
         {
           model: Course,
+          as: 'Course',
           attributes: ['id', 'title', 'description', 'price', 'duration', 'level', 'category', 'thumbnail'],
           required: false
         }
@@ -339,7 +344,7 @@ const cancelEnrollment = async (req, res) => {
     const userId = req.user.userId;
 
     const enrollment = await StudentCourse.findByPk(id, {
-      include: [{ model: Course, as: 'course' }]
+      include: [{ model: Course, as: 'Course' }]
     });
 
     if (!enrollment) {
@@ -359,9 +364,9 @@ const cancelEnrollment = async (req, res) => {
     await enrollment.save();
 
     // Update course enrollment count
-    if (enrollment.course) {
-      enrollment.course.enrollmentCount = Math.max(0, (enrollment.course.enrollmentCount || 0) - 1);
-      await enrollment.course.save();
+    if (enrollment.Course) {
+      enrollment.Course.enrollmentCount = Math.max(0, (enrollment.Course.enrollmentCount || 0) - 1);
+      await enrollment.Course.save();
     }
 
     return sendSuccess(res, { enrollment }, 'Enrollment cancelled successfully');
