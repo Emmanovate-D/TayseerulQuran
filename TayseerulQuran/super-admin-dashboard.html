@@ -110,7 +110,6 @@
                     <a href="super-admin-payments.html" title="Payments" data-permission="view_payments"><img src="assets/images/menu-icon/icon-5.png" alt="Icon"></a>
                     <a href="super-admin-roles.html" title="Admin Roles" data-role="super_admin"><img src="assets/images/menu-icon/icon-1.png" alt="Icon"></a>
                     <a href="super-admin-blog.html" title="Blog" data-permission="view_blog_posts"><img src="assets/images/menu-icon/icon-2.png" alt="Icon"></a>
-                    <a href="super-admin-content.html" title="Content" data-permission="view_all_pages"><img src="assets/images/menu-icon/icon-3.png" alt="Icon"></a>
                 </div>
             </div>
             <!-- Sidebar Wrapper End -->
@@ -125,7 +124,6 @@
                     <a href="super-admin-payments.html" data-permission="view_payments">Payments</a>
                     <a href="super-admin-roles.html" data-role="super_admin">Admin Roles</a>
                     <a href="super-admin-blog.html" data-permission="view_blog_posts">Blog</a>
-                    <a href="super-admin-content.html" data-permission="view_all_pages">Content</a>
                 </div>
                 <!-- Admin Tab Menu End -->
 
@@ -211,6 +209,77 @@
                                 </div>
                             </div>
                         </div>
+                        
+                        <!-- Additional Stats Row -->
+                        <div class="row mb-4">
+                            <div class="col-xl-3 col-md-6 mb-4">
+                                <div class="card border-0 shadow-sm">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <h6 class="text-muted mb-2">Total Enrollments</h6>
+                                                <h3 class="mb-0" id="totalEnrollments">-</h3>
+                                                <small class="text-info"><i class="icofont-users"></i> All time</small>
+                                            </div>
+                                            <div class="bg-primary bg-opacity-10 rounded-circle p-3">
+                                                <i class="flaticon-user text-primary" style="font-size: 2rem;"></i>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-xl-3 col-md-6 mb-4">
+                                <div class="card border-0 shadow-sm">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <h6 class="text-muted mb-2">Active Enrollments</h6>
+                                                <h3 class="mb-0" id="activeEnrollments">-</h3>
+                                                <small class="text-success"><i class="icofont-check"></i> Currently enrolled</small>
+                                            </div>
+                                            <div class="bg-success bg-opacity-10 rounded-circle p-3">
+                                                <i class="flaticon-check text-success" style="font-size: 2rem;"></i>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-xl-3 col-md-6 mb-4">
+                                <div class="card border-0 shadow-sm">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <h6 class="text-muted mb-2">Completed Courses</h6>
+                                                <h3 class="mb-0" id="completedEnrollments">-</h3>
+                                                <small class="text-success"><i class="icofont-trophy"></i> Finished</small>
+                                            </div>
+                                            <div class="bg-warning bg-opacity-10 rounded-circle p-3">
+                                                <i class="flaticon-trophy text-warning" style="font-size: 2rem;"></i>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-xl-3 col-md-6 mb-4">
+                                <div class="card border-0 shadow-sm">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <h6 class="text-muted mb-2">Completion Rate</h6>
+                                                <h3 class="mb-0" id="completionRate">-</h3>
+                                                <small class="text-info"><i class="icofont-chart-line"></i> Success rate</small>
+                                            </div>
+                                            <div class="bg-info bg-opacity-10 rounded-circle p-3">
+                                                <i class="flaticon-chart text-info" style="font-size: 2rem;"></i>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                         <!-- Stats Cards End -->
 
                         <!-- Quick Actions Start -->
@@ -251,7 +320,7 @@
 
                         <!-- Recent Activity Start -->
                         <div class="row">
-                            <div class="col-lg-8 mb-4">
+                            <div class="col-lg-6 mb-4">
                                 <div class="card border-0 shadow-sm">
                                     <div class="card-header bg-white border-0 py-3">
                                         <h5 class="mb-0">Recent Payments</h5>
@@ -284,6 +353,41 @@
                                 </div>
                             </div>
 
+                            <div class="col-lg-6 mb-4">
+                                <div class="card border-0 shadow-sm">
+                                    <div class="card-header bg-white border-0 py-3">
+                                        <h5 class="mb-0">Recent Enrollments</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="table-responsive">
+                                            <table class="table table-hover">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Student</th>
+                                                        <th>Course</th>
+                                                        <th>Date</th>
+                                                        <th>Status</th>
+                                                        <th>Progress</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="recentEnrollmentsBody">
+                                                    <tr>
+                                                        <td colspan="5" class="text-center">
+                                                            <div class="spinner-border text-primary" role="status">
+                                                                <span class="visually-hidden">Loading...</span>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                        <a href="super-admin-students.html" class="btn btn-link p-0 mt-2" data-permission="view_students">View All Enrollments →</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
                             <div class="col-lg-4 mb-4">
                                 <div class="card border-0 shadow-sm">
                                     <div class="card-header bg-white border-0 py-3">
@@ -537,6 +641,41 @@
                     $('#totalRevenue').text('$0');
                 }
                 
+                // Load enrollment statistics
+                try {
+                    if (API.enrollment) {
+                        const enrollmentsResponse = await API.enrollment.getAll({ limit: 10000 }); // Get all enrollments
+                        if (enrollmentsResponse.success && enrollmentsResponse.data) {
+                            const enrollments = enrollmentsResponse.data.enrollments || [];
+                            const totalEnrollments = enrollments.length;
+                            const activeEnrollments = enrollments.filter(e => e.status === 'enrolled' || e.status === 'active').length;
+                            const completedEnrollments = enrollments.filter(e => e.status === 'completed').length;
+                            const completionRate = totalEnrollments > 0 ? ((completedEnrollments / totalEnrollments) * 100).toFixed(1) : 0;
+                            
+                            $('#totalEnrollments').text(totalEnrollments || 0);
+                            $('#activeEnrollments').text(activeEnrollments || 0);
+                            $('#completedEnrollments').text(completedEnrollments || 0);
+                            $('#completionRate').text(completionRate + '%');
+                        } else {
+                            $('#totalEnrollments').text('0');
+                            $('#activeEnrollments').text('0');
+                            $('#completedEnrollments').text('0');
+                            $('#completionRate').text('0%');
+                        }
+                    } else {
+                        $('#totalEnrollments').text('0');
+                        $('#activeEnrollments').text('0');
+                        $('#completedEnrollments').text('0');
+                        $('#completionRate').text('0%');
+                    }
+                } catch (error) {
+                    console.error('Error loading enrollment stats:', error);
+                    $('#totalEnrollments').text('0');
+                    $('#activeEnrollments').text('0');
+                    $('#completedEnrollments').text('0');
+                    $('#completionRate').text('0%');
+                }
+                
             } catch (error) {
                 console.error('Error loading dashboard stats:', error);
             }
@@ -594,6 +733,61 @@
             }
         }
         
+        // Load recent enrollments
+        async function loadRecentEnrollments() {
+            try {
+                if (typeof API === 'undefined' || !API.enrollment) {
+                    console.error('API or enrollment API not loaded');
+                    $('#recentEnrollmentsBody').html('<tr><td colspan="5" class="text-center text-muted">Enrollment API not available</td></tr>');
+                    return;
+                }
+                
+                console.log('Loading recent enrollments...');
+                const response = await API.enrollment.getAll({ limit: 5 });
+                const tbody = $('#recentEnrollmentsBody');
+                
+                if (response.success && response.data && response.data.enrollments) {
+                    const enrollments = response.data.enrollments;
+                    
+                    if (enrollments.length === 0) {
+                        tbody.html('<tr><td colspan="5" class="text-center text-muted">No enrollments found</td></tr>');
+                        return;
+                    }
+                    
+                    let html = '';
+                    enrollments.forEach(enrollment => {
+                        const studentName = enrollment.student ? `${enrollment.student.firstName || ''} ${enrollment.student.lastName || ''}`.trim() : 
+                                           enrollment.User ? `${enrollment.User.firstName || ''} ${enrollment.User.lastName || ''}`.trim() : 'Unknown';
+                        const courseName = enrollment.Course ? enrollment.Course.title : enrollment.course ? enrollment.course.title : 'Unknown Course';
+                        const date = enrollment.enrollmentDate ? new Date(enrollment.enrollmentDate).toLocaleDateString() : 
+                                    enrollment.createdAt ? new Date(enrollment.createdAt).toLocaleDateString() : 'N/A';
+                        const statusClass = enrollment.status === 'completed' ? 'success' : 
+                                          enrollment.status === 'enrolled' || enrollment.status === 'active' ? 'primary' : 
+                                          enrollment.status === 'dropped' ? 'danger' : 'secondary';
+                        const statusText = enrollment.status ? enrollment.status.charAt(0).toUpperCase() + enrollment.status.slice(1) : 'Unknown';
+                        const progress = enrollment.progress !== undefined ? enrollment.progress : 0;
+                        
+                        html += `
+                            <tr>
+                                <td>${studentName || 'Unknown'}</td>
+                                <td>${courseName}</td>
+                                <td>${date}</td>
+                                <td><span class="badge bg-${statusClass}">${statusText}</span></td>
+                                <td><small>${progress}%</small></td>
+                            </tr>
+                        `;
+                    });
+                    
+                    tbody.html(html);
+                } else {
+                    tbody.html('<tr><td colspan="5" class="text-center text-muted">No enrollments found</td></tr>');
+                }
+            } catch (error) {
+                console.error('Error loading recent enrollments:', error);
+                $('#recentEnrollmentsBody').html(`<tr><td colspan="5" class="text-center text-danger">Error loading enrollments: ${error.message || 'Unknown error'}</td></tr>`);
+            }
+        }
+        
         // Load stats and payments on page load
         $(document).ready(function() {
             // Wait for jQuery to be fully loaded
@@ -603,6 +797,7 @@
                     if (typeof jQuery !== 'undefined') {
                         loadDashboardStats();
                         loadRecentPayments();
+                        loadRecentEnrollments();
                     } else {
                         console.error('jQuery still not loaded after retry');
                     }
@@ -610,6 +805,7 @@
             } else {
                 loadDashboardStats();
                 loadRecentPayments();
+                loadRecentEnrollments();
             }
         });
     </script>

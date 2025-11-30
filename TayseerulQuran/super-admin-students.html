@@ -63,7 +63,6 @@
                     <a href="super-admin-payments.html" title="Payments" data-permission="view_payments"><img src="assets/images/menu-icon/icon-5.png" alt="Icon"></a>
                     <a href="super-admin-roles.html" title="Admin Roles" data-role="super_admin"><img src="assets/images/menu-icon/icon-1.png" alt="Icon"></a>
                     <a href="super-admin-blog.html" title="Blog" data-permission="view_blog_posts"><img src="assets/images/menu-icon/icon-2.png" alt="Icon"></a>
-                    <a href="super-admin-content.html" title="Content" data-permission="view_all_pages"><img src="assets/images/menu-icon/icon-3.png" alt="Icon"></a>
                 </div>
             </div>
 
@@ -76,7 +75,6 @@
                     <a href="super-admin-payments.html" data-permission="view_payments">Payments</a>
                     <a href="super-admin-roles.html" data-role="super_admin">Admin Roles</a>
                     <a href="super-admin-blog.html" data-permission="view_blog_posts">Blog</a>
-                    <a href="super-admin-content.html" data-permission="view_all_pages">Content</a>
                 </div>
 
                 <div class="main-content-wrapper">
@@ -110,86 +108,12 @@
                                                 <th>Actions</th>
                                             </tr>
                                         </thead>
-                                        <tbody>
+                                        <tbody id="studentsTableBody">
                                             <tr>
-                                                <td>1</td>
-                                                <td>
-                                                    <div class="d-flex align-items-center">
-                                                        <img src="assets/images/author/author-01.jpg" class="rounded-circle me-2" width="40" height="40" alt="">
-                                                        <div>
-                                                            <strong>John Doe</strong>
-                                                            <br><small class="text-muted">Student ID: STD001</small>
-                                                        </div>
+                                                <td colspan="7" class="text-center">
+                                                    <div class="spinner-border text-primary" role="status">
+                                                        <span class="visually-hidden">Loading...</span>
                                                     </div>
-                                                </td>
-                                                <td>john.doe@example.com</td>
-                                                <td>3</td>
-                                                <td>Sarah Johnson</td>
-                                                <td>2024-01-10</td>
-                                                <td>
-                                                    <button class="btn btn-sm btn-info px-2 py-1" data-bs-toggle="modal" data-bs-target="#viewStudentModal" data-permission="view_student_profile" style="font-size: 0.7rem;">
-                                                        <i class="icofont-eye"></i>
-                                                    </button>
-                                                    <button class="btn btn-sm btn-warning px-2 py-1" data-bs-toggle="modal" data-bs-target="#editStudentModal" data-permission="edit_student" style="font-size: 0.7rem;">
-                                                        <i class="icofont-edit"></i>
-                                                    </button>
-                                                    <button class="btn btn-sm btn-danger px-2 py-1" onclick="deleteStudent(1)" data-permission="delete_student" style="font-size: 0.7rem;">
-                                                        <i class="icofont-trash"></i>
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <td>2</td>
-                                                <td>
-                                                    <div class="d-flex align-items-center">
-                                                        <img src="assets/images/author/author-02.jpg" class="rounded-circle me-2" width="40" height="40" alt="">
-                                                        <div>
-                                                            <strong>Jane Smith</strong>
-                                                            <br><small class="text-muted">Student ID: STD002</small>
-                                                        </div>
-                                                    </div>
-                                                </td>
-                                                <td>jane.smith@example.com</td>
-                                                <td>5</td>
-                                                <td>John Smith</td>
-                                                <td>2024-01-08</td>
-                                                <td>
-                                                    <button class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#viewStudentModal" data-permission="view_student_profile">
-                                                        <i class="icofont-eye"></i>
-                                                    </button>
-                                                    <button class="btn btn-sm btn-warning" data-bs-toggle="modal" data-bs-target="#editStudentModal" data-permission="edit_student">
-                                                        <i class="icofont-edit"></i>
-                                                    </button>
-                                                    <button class="btn btn-sm btn-danger" onclick="deleteStudent(2)" data-permission="delete_student">
-                                                        <i class="icofont-trash"></i>
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <td>3</td>
-                                                <td>
-                                                    <div class="d-flex align-items-center">
-                                                        <img src="assets/images/author/author-03.jpg" class="rounded-circle me-2" width="40" height="40" alt="">
-                                                        <div>
-                                                            <strong>Mike Johnson</strong>
-                                                            <br><small class="text-muted">Student ID: STD003</small>
-                                                        </div>
-                                                    </div>
-                                                </td>
-                                                <td>mike.johnson@example.com</td>
-                                                <td>2</td>
-                                                <td>Emily Davis</td>
-                                                <td>2024-01-05</td>
-                                                <td>
-                                                    <button class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#viewStudentModal" data-permission="view_student_profile">
-                                                        <i class="icofont-eye"></i>
-                                                    </button>
-                                                    <button class="btn btn-sm btn-warning" data-bs-toggle="modal" data-bs-target="#editStudentModal" data-permission="edit_student">
-                                                        <i class="icofont-edit"></i>
-                                                    </button>
-                                                    <button class="btn btn-sm btn-danger" onclick="deleteStudent(3)" data-permission="delete_student">
-                                                        <i class="icofont-trash"></i>
-                                                    </button>
                                                 </td>
                                             </tr>
                                         </tbody>
@@ -416,6 +340,118 @@
             alert('Student updated successfully!');
             $('#editStudentModal').modal('hide');
         }
+        
+        // Load students with enrollment data
+        async function loadStudents() {
+            try {
+                if (typeof API === 'undefined') {
+                    console.error('API not loaded');
+                    $('#studentsTableBody').html('<tr><td colspan="7" class="text-center text-danger">API not loaded. Please refresh the page.</td></tr>');
+                    return;
+                }
+                
+                console.log('Loading students...');
+                
+                // Load all students
+                const studentsResponse = await API.user.getAll({ role: 'student', limit: 1000 });
+                const students = studentsResponse.success && studentsResponse.data ? 
+                               (studentsResponse.data.users || studentsResponse.data || []) : [];
+                
+                // Load all enrollments
+                const enrollmentsResponse = await API.enrollment.getAll({ limit: 10000 });
+                const enrollments = enrollmentsResponse.success && enrollmentsResponse.data ? 
+                                   (enrollmentsResponse.data.enrollments || enrollmentsResponse.data || []) : [];
+                
+                // Create a map of student enrollments
+                const enrollmentMap = {};
+                enrollments.forEach(enrollment => {
+                    const studentId = enrollment.studentId || enrollment.User?.id;
+                    if (studentId) {
+                        if (!enrollmentMap[studentId]) {
+                            enrollmentMap[studentId] = [];
+                        }
+                        enrollmentMap[studentId].push(enrollment);
+                    }
+                });
+                
+                const tbody = $('#studentsTableBody');
+                
+                if (students.length === 0) {
+                    tbody.html('<tr><td colspan="7" class="text-center text-muted">No students found.</td></tr>');
+                    return;
+                }
+                
+                let html = '';
+                students.forEach((student, index) => {
+                    const studentId = student.id;
+                    const studentEnrollments = enrollmentMap[studentId] || [];
+                    const enrolledCount = studentEnrollments.length;
+                    const activeEnrollments = studentEnrollments.filter(e => e.status === 'enrolled' || e.status === 'active');
+                    const completedEnrollments = studentEnrollments.filter(e => e.status === 'completed');
+                    
+                    const firstName = student.firstName || '';
+                    const lastName = student.lastName || '';
+                    const fullName = `${firstName} ${lastName}`.trim() || student.email || 'Unknown';
+                    const email = student.email || 'N/A';
+                    const joinDate = student.createdAt ? new Date(student.createdAt).toLocaleDateString() : 'N/A';
+                    const profileImage = student.profileImage || `assets/images/author/author-0${(index % 6) + 1}.jpg`;
+                    
+                    // Get assigned teacher (if any) - this would need to come from a different API
+                    const assignedTeacher = 'Not Assigned'; // TODO: Get from student-teacher relationship
+                    
+                    html += `
+                        <tr>
+                            <td>${studentId}</td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <img src="${profileImage}" class="rounded-circle me-2" width="40" height="40" alt="" onerror="this.src='assets/images/author/author-01.jpg'">
+                                    <div>
+                                        <strong>${fullName}</strong>
+                                        <br><small class="text-muted">Student ID: STD${String(studentId).padStart(3, '0')}</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>${email}</td>
+                            <td>
+                                <span class="badge bg-primary">${enrolledCount}</span>
+                                ${completedEnrollments.length > 0 ? `<br><small class="text-success">${completedEnrollments.length} completed</small>` : ''}
+                            </td>
+                            <td>${assignedTeacher}</td>
+                            <td>${joinDate}</td>
+                            <td>
+                                <button class="btn btn-sm btn-info px-2 py-1" data-bs-toggle="modal" data-bs-target="#viewStudentModal" data-student-id="${studentId}" data-permission="view_student_profile" style="font-size: 0.7rem;">
+                                    <i class="icofont-eye"></i>
+                                </button>
+                                <button class="btn btn-sm btn-warning px-2 py-1" data-bs-toggle="modal" data-bs-target="#editStudentModal" data-student-id="${studentId}" data-permission="edit_student" style="font-size: 0.7rem;">
+                                    <i class="icofont-edit"></i>
+                                </button>
+                                <button class="btn btn-sm btn-danger px-2 py-1" onclick="deleteStudent(${studentId})" data-permission="delete_student" style="font-size: 0.7rem;">
+                                    <i class="icofont-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                });
+                
+                tbody.html(html);
+            } catch (error) {
+                console.error('Error loading students:', error);
+                $('#studentsTableBody').html(`<tr><td colspan="7" class="text-center text-danger">Error loading students: ${error.message || 'Unknown error'}</td></tr>`);
+            }
+        }
+        
+        // Load students on page load
+        $(document).ready(function() {
+            if (typeof jQuery === 'undefined') {
+                setTimeout(function() {
+                    if (typeof jQuery !== 'undefined') {
+                        loadStudents();
+                    }
+                }, 1000);
+            } else {
+                loadStudents();
+            }
+        });
     </script>
 
 </body>
