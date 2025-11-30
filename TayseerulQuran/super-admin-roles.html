@@ -30,7 +30,8 @@
             bottom: 0;
             width: 250px;
             background: #fff;
-            padding: 20px 0;
+            padding: 20px ;
+            padding-left: 20px;
             z-index: 100;
             overflow-y: auto;
             box-shadow: 2px 0 10px rgba(0,0,0,0.1);
@@ -427,10 +428,10 @@
                                 <td><span class="badge bg-secondary">${permissionCount} permissions</span></td>
                                 <td>${status}</td>
                                 <td>
-                                    <button class="btn btn-sm btn-info px-2 py-1 small" data-bs-toggle="modal" data-bs-target="#editPermissionsModal" data-admin-id="${admin.id}" data-permission="assign_permissions" style="font-size: 0.7rem;">
+                                    <button class="btn btn-sm btn-info px-2 py-1 small" onclick="openPermissionsModal(${admin.id})" data-admin-id="${admin.id}" data-permission="assign_permissions" style="font-size: 0.7rem;">
                                         <i class="icofont-settings me-1"></i> Permissions
                                     </button>
-                                    <button class="btn btn-sm btn-warning px-2 py-1" data-bs-toggle="modal" data-bs-target="#editAdminModal" data-admin-id="${admin.id}" data-permission="edit_admin" style="font-size: 0.7rem;">
+                                    <button class="btn btn-sm btn-warning px-2 py-1" onclick="openEditAdminModal(${admin.id})" data-admin-id="${admin.id}" data-permission="edit_admin" style="font-size: 0.7rem;">
                                         <i class="icofont-edit"></i>
                                     </button>
                                     <button class="btn btn-sm btn-danger px-2 py-1" onclick="deleteAdmin(${admin.id})" data-admin-id="${admin.id}" data-permission="delete_admin" style="font-size: 0.7rem;">
@@ -714,7 +715,8 @@
             // Load admins
             loadAdmins();
             
-            // Handle permissions modal button click
+            // Event handlers are now using onclick in the HTML, so these are not needed
+            // But keeping for backward compatibility if any buttons still use data-bs-target
             $(document).on('click', '[data-bs-target="#editPermissionsModal"]', function() {
                 const adminId = $(this).data('admin-id');
                 if (adminId) {
@@ -722,7 +724,6 @@
                 }
             });
             
-            // Handle edit admin modal button click
             $(document).on('click', '[data-bs-target="#editAdminModal"]', function() {
                 const adminId = $(this).data('admin-id');
                 if (adminId) {
@@ -857,3 +858,4 @@
 
 </html>
 
+ 

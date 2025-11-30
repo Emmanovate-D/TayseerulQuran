@@ -30,7 +30,8 @@
             bottom: 0;
             width: 250px;
             background: #fff;
-            padding: 20px 0;
+            padding: 20px ;
+padding-left: 20px;
             z-index: 100;
             overflow-y: auto;
             box-shadow: 2px 0 10px rgba(0,0,0,0.1);
@@ -690,10 +691,10 @@
                                 <td>${post.views || 0}</td>
                                 <td>${status}</td>
                                 <td>
-                                    <button class="btn btn-sm btn-info px-2 py-1" data-bs-toggle="modal" data-bs-target="#viewPostModal" data-post-id="${post.id}" style="font-size: 0.7rem;">
+                                    <button class="btn btn-sm btn-info px-2 py-1" onclick="viewPost(${post.id})" data-post-id="${post.id}" style="font-size: 0.7rem;">
                                         <i class="icofont-eye"></i>
                                     </button>
-                                    <button class="btn btn-sm btn-warning px-2 py-1" data-bs-toggle="modal" data-bs-target="#editPostModal" data-post-id="${post.id}" data-permission="edit_blog_post" style="font-size: 0.7rem;">
+                                    <button class="btn btn-sm btn-warning px-2 py-1" onclick="openEditPostModal(${post.id})" data-post-id="${post.id}" data-permission="edit_blog_post" style="font-size: 0.7rem;">
                                         <i class="icofont-edit"></i>
                                     </button>
                                     <button class="btn btn-sm btn-danger px-2 py-1" onclick="deletePost(${post.id})" data-post-id="${post.id}" data-permission="delete_blog_post" style="font-size: 0.7rem;">
@@ -722,13 +723,55 @@
             }
         }
         
-        // Set edit post ID when edit modal opens
-        $(document).on('click', '[data-bs-target="#editPostModal"]', function() {
-            const postId = $(this).data('post-id');
+        // Open edit post modal
+        async function openEditPostModal(postId) {
             currentEditPostId = postId;
             
             // Load post data into form
-            loadPostData(postId);
+            await loadPostData(postId);
+            $('#editPostModal').modal('show');
+        }
+        
+        // View post details
+        async function viewPost(postId) {
+            try {
+                if (typeof API === 'undefined') {
+                    showMessage('API not loaded. Please refresh the page.', 'error');
+                    return;
+                }
+                
+                const response = await API.blog.getById(postId);
+                if (response.success && response.data && response.data.post) {
+                    const post = response.data.post;
+                    const author = post.author ? `${post.author.firstName} ${post.author.lastName}` : 'Unknown';
+                    const publishedDate = post.publishedAt ? new Date(post.publishedAt).toLocaleDateString() : 'Draft';
+                    const views = post.views || 0;
+                    
+                    // Update modal content
+                    $('#viewPostModal .modal-body').html(`
+                        <img src="${post.featuredImage || 'assets/images/blog/blog-01.jpg'}" class="img-fluid mb-3" alt="">
+                        <h3>${post.title || 'Untitled'}</h3>
+                        <p class="text-muted">Published on: ${publishedDate} | Views: ${views} | Author: ${author}</p>
+                        <p>${post.content || 'No content available'}</p>
+                        ${post.tags ? `<p class="text-muted"><strong>Tags:</strong> ${post.tags}</p>` : ''}
+                    `);
+                    
+                    $('#viewPostModal').modal('show');
+                } else {
+                    showMessage('Failed to load post details', 'error');
+                }
+            } catch (error) {
+                console.error('Error loading post:', error);
+                showMessage('Failed to load post details. Please try again.', 'error');
+            }
+        }
+        
+        // Keep backward compatibility
+        $(document).on('click', '[data-bs-target="#editPostModal"]', function() {
+            const postId = $(this).data('post-id');
+            if (postId) {
+                openEditPostModal(postId);
+            }
         });
         
         // Load post data for editing

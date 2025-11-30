@@ -378,20 +378,243 @@
             }
         }
         
-        function deleteStudent(id) {
-            if (confirm('Are you sure you want to delete this student?')) {
-                alert('Student deleted successfully!');
+        // Delete student
+        async function deleteStudent(id) {
+            if (!confirm('Are you sure you want to delete this student? This action cannot be undone.')) {
+                return;
+            }
+            
+            try {
+                if (typeof API === 'undefined') {
+                    showMessage('API not loaded. Please refresh the page.', 'error');
+                    return;
+                }
+                
+                const response = await API.user.delete(id);
+                
+                if (response.success) {
+                    showMessage('Student deleted successfully!');
+                    $(`tr[data-student-id="${id}"]`).fadeOut(300, function() {
+                        $(this).remove();
+                        if ($('#studentsTableBody tr').length === 0) {
+                            loadStudents();
+                        }
+                    });
+                } else {
+                    showMessage(response.message || 'Failed to delete student', 'error');
+                }
+            } catch (error) {
+                console.error('Error deleting student:', error);
+                showMessage(error.message || 'Failed to delete student. Please try again.', 'error');
             }
         }
         
-        function assignTeacher() {
-            alert('Students assigned to teacher successfully!');
-            $('#assignTeacherModal').modal('hide');
+        // Assign teacher
+        async function assignTeacher() {
+            try {
+                const selectedStudents = [];
+                $('#assignTeacherModal select[multiple] option:selected').each(function() {
+                    const studentId = $(this).val();
+                    if (studentId) {
+                        selectedStudents.push(parseInt(studentId));
+                    }
+                });
+                
+                const teacherId = $('#assignTeacherModal select:not([multiple])').val();
+                
+                if (selectedStudents.length === 0) {
+                    showMessage('Please select at least one student', 'error');
+                    return;
+                }
+                
+                if (!teacherId) {
+                    showMessage('Please select a teacher', 'error');
+                    return;
+                }
+                
+                // TODO: Implement teacher assignment API call
+                showMessage('Teacher assignment feature coming soon', 'warning');
+                $('#assignTeacherModal').modal('hide');
+            } catch (error) {
+                console.error('Error assigning teacher:', error);
+                showMessage('Failed to assign teacher. Please try again.', 'error');
+            }
         }
         
-        function updateStudent() {
-            alert('Student updated successfully!');
-            $('#editStudentModal').modal('hide');
+        // Update student
+        async function updateStudent() {
+            if (!currentEditingStudentId) {
+                showMessage('Student ID not found', 'error');
+                return;
+            }
+            
+            try {
+                if (typeof API === 'undefined') {
+                    showMessage('API not loaded. Please refresh the page.', 'error');
+                    return;
+                }
+                
+                const form = $('#editStudentModal form');
+                const fullName = form.find('input[type="text"]').first().val().trim();
+                const email = form.find('input[type="email"]').val().trim();
+                const phone = form.find('input[type="tel"]').val().trim();
+                const teacherId = form.find('select').val();
+                
+                if (!fullName || !email) {
+                    showMessage('Please fill in all required fields', 'error');
+                    return;
+                }
+                
+                const nameParts = fullName.split(' ');
+                const firstName = nameParts[0] || '';
+                const lastName = nameParts.slice(1).join(' ') || '';
+                
+                const userData = {
+                    firstName: firstName,
+                    lastName: lastName,
+                    email: email,
+                    phone: phone || null
+                };
+                
+                const response = await API.user.update(currentEditingStudentId, userData);
+                
+                if (response.success) {
+                    showMessage('Student updated successfully!');
+                    $('#editStudentModal').modal('hide');
+                    currentEditingStudentId = null;
+                    await loadStudents();
+                } else {
+                    showMessage(response.message || 'Failed to update student', 'error');
+                }
+            } catch (error) {
+                console.error('Error updating student:', error);
+                showMessage(error.message || 'Failed to update student. Please try again.', 'error');
+            }
+        }
+        
+        // Show success/error message
+        function showMessage(message, type = 'success') {
+            const alertClass = type === 'success' ? 'alert-success' : (type === 'error' ? 'alert-danger' : 'alert-warning');
+            const messageHtml = `<div class="alert ${alertClass} alert-dismissible fade show" role="alert" style="position: fixed; top: 20px; right: 20px; z-index: 9999; min-width: 300px;">
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>`;
+            $('body').append(messageHtml);
+            setTimeout(() => $('.alert').fadeOut(), 5000);
+        }
+        
+        let currentEditingStudentId = null;
+        
+        // View student details
+        async function viewStudent(studentId) {
+            try {
+                if (typeof API === 'undefined') {
+                    showMessage('API not loaded. Please refresh the page.', 'error');
+                    return;
+                }
+                
+                const response = await API.user.getById(studentId);
+                if (response.success && response.data && response.data.user) {
+                    const student = response.data.user;
+                    const fullName = `${student.firstName || ''} ${student.lastName || ''}`.trim() || 'Unknown';
+                    const email = student.email || 'N/A';
+                    const phone = student.phone || 'N/A';
+                    const profileImage = student.profileImage || 'assets/images/author/author-01.jpg';
+                    const joinDate = student.createdAt ? new Date(student.createdAt).toLocaleDateString() : 'N/A';
+                    const status = student.isActive ? '<span class="badge bg-success">Active</span>' : '<span class="badge bg-secondary">Inactive</span>';
+                    
+                    // Get enrollment count
+                    let enrolledCount = 0;
+                    try {
+                        const enrollmentsResponse = await API.enrollment.getAll({ limit: 10000 });
+                        if (enrollmentsResponse.success && enrollmentsResponse.data) {
+                            const enrollments = enrollmentsResponse.data.enrollments || [];
+                            enrolledCount = enrollments.filter(e => (e.studentId || e.User?.id) === studentId).length;
+                        }
+                    } catch (e) {
+                        console.warn('Error loading enrollments:', e);
+                    }
+                    
+                    // Update modal content
+                    $('#viewStudentModal .modal-body').html(`
+                        <div class="row">
+                            <div class="col-md-4 text-center">
+                                <img src="${profileImage}" class="rounded-circle mb-3" width="150" height="150" alt="" onerror="this.src='assets/images/author/author-01.jpg'">
+                                <h5>${fullName}</h5>
+                                <p class="text-muted">Student ID: STD${String(studentId).padStart(3, '0')}</p>
+                                ${status}
+                            </div>
+                            <div class="col-md-8">
+                                <table class="table table-borderless">
+                                    <tr>
+                                        <th>Email:</th>
+                                        <td>${email}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Phone:</th>
+                                        <td>${phone}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Enrolled Courses:</th>
+                                        <td>${enrolledCount}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Assigned Teacher:</th>
+                                        <td>Not Assigned</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Join Date:</th>
+                                        <td>${joinDate}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Status:</th>
+                                        <td>${status}</td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                    `);
+                    
+                    $('#viewStudentModal').modal('show');
+                } else {
+                    showMessage('Failed to load student details', 'error');
+                }
+            } catch (error) {
+                console.error('Error loading student:', error);
+                showMessage('Failed to load student details. Please try again.', 'error');
+            }
+        }
+        
+        // Open edit student modal
+        async function openEditStudentModal(studentId) {
+            currentEditingStudentId = studentId;
+            
+            try {
+                if (typeof API === 'undefined') {
+                    showMessage('API not loaded. Please refresh the page.', 'error');
+                    return;
+                }
+                
+                const response = await API.user.getById(studentId);
+                if (response.success && response.data && response.data.user) {
+                    const student = response.data.user;
+                    const fullName = `${student.firstName || ''} ${student.lastName || ''}`.trim();
+                    const email = student.email || '';
+                    const phone = student.phone || '';
+                    
+                    const form = $('#editStudentModal form');
+                    form.find('input[type="text"]').first().val(fullName);
+                    form.find('input[type="email"]').val(email);
+                    form.find('input[type="tel"]').val(phone);
+                    
+                    $('#editStudentModal').modal('show');
+                } else {
+                    showMessage('Failed to load student details', 'error');
+                }
+            } catch (error) {
+                console.error('Error loading student for edit:', error);
+                showMessage('Failed to load student details. Please try again.', 'error');
+            }
         }
         
         // Load students with enrollment data
@@ -453,7 +676,7 @@
                     const assignedTeacher = 'Not Assigned'; // TODO: Get from student-teacher relationship
                     
                     html += `
-                        <tr>
+                        <tr data-student-id="${studentId}">
                             <td>${studentId}</td>
                             <td>
                                 <div class="d-flex align-items-center">
@@ -472,10 +695,10 @@
                             <td>${assignedTeacher}</td>
                             <td>${joinDate}</td>
                             <td>
-                                <button class="btn btn-sm btn-info px-2 py-1" data-bs-toggle="modal" data-bs-target="#viewStudentModal" data-student-id="${studentId}" data-permission="view_student_profile" style="font-size: 0.7rem;">
+                                <button class="btn btn-sm btn-info px-2 py-1" onclick="viewStudent(${studentId})" data-student-id="${studentId}" data-permission="view_student_profile" style="font-size: 0.7rem;">
                                     <i class="icofont-eye"></i>
                                 </button>
-                                <button class="btn btn-sm btn-warning px-2 py-1" data-bs-toggle="modal" data-bs-target="#editStudentModal" data-student-id="${studentId}" data-permission="edit_student" style="font-size: 0.7rem;">
+                                <button class="btn btn-sm btn-warning px-2 py-1" onclick="openEditStudentModal(${studentId})" data-student-id="${studentId}" data-permission="edit_student" style="font-size: 0.7rem;">
                                     <i class="icofont-edit"></i>
                                 </button>
                                 <button class="btn btn-sm btn-danger px-2 py-1" onclick="deleteStudent(${studentId})" data-permission="delete_student" style="font-size: 0.7rem;">
@@ -509,6 +732,25 @@
         $(document).ready(function() {
             // Set active menu item
             setActiveMenuItem();
+            
+            // Remove old event handlers and add new ones
+            $(document).off('click', '[data-bs-target="#viewStudentModal"]');
+            $(document).off('click', '[data-bs-target="#editStudentModal"]');
+            
+            // Add event handlers for view and edit buttons
+            $(document).on('click', '[data-bs-target="#viewStudentModal"]', function() {
+                const studentId = $(this).data('student-id');
+                if (studentId) {
+                    viewStudent(studentId);
+                }
+            });
+            
+            $(document).on('click', '[data-bs-target="#editStudentModal"]', function() {
+                const studentId = $(this).data('student-id');
+                if (studentId) {
+                    openEditStudentModal(studentId);
+                }
+            });
             
             if (typeof jQuery === 'undefined') {
                 setTimeout(function() {

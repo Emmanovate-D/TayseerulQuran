@@ -577,7 +577,7 @@
                                 <td>${students}</td>
                                 <td>${status}</td>
                                 <td>
-                                    <button class="btn btn-sm btn-info px-2 py-1" data-bs-toggle="modal" data-bs-target="#editCourseModal" data-course-id="${course.id}" style="font-size: 0.7rem;">
+                                    <button class="btn btn-sm btn-info px-2 py-1" onclick="openEditCourseModal(${course.id})" data-course-id="${course.id}" style="font-size: 0.7rem;">
                                         <i class="icofont-edit"></i>
                                     </button>
                                     <button class="btn btn-sm btn-danger px-2 py-1" onclick="deleteCourse(${course.id})" style="font-size: 0.7rem;">
@@ -1080,12 +1080,16 @@
             }
         }
 
-        // Set edit course ID when edit modal opens
-        $(document).on('click', '[data-bs-target="#editCourseModal"]', async function () {
-            const courseId = $(this).data('course-id');
+        // Open edit course modal
+        async function openEditCourseModal(courseId) {
             currentEditCourseId = courseId;
 
             try {
+                if (typeof API === 'undefined' || typeof API.course === 'undefined') {
+                    showMessage('API not loaded. Please refresh the page.', 'error');
+                    return;
+                }
+                
                 const response = await API.course.getById(courseId);
                 if (response.success && response.data) {
                     const course = response.data.course || response.data;
@@ -1106,6 +1110,8 @@
                         $('#editCourseImagePreview').hide().attr('src', '');
                         $('#editCourseImagePlaceholder').show();
                     }
+                    
+                    $('#editCourseModal').modal('show');
                 } else {
                     showMessage(response.message || 'Failed to load course for editing', 'error');
                 }
@@ -1113,7 +1119,7 @@
                 console.error('Error loading course for edit:', error);
                 showMessage(error.message || 'Failed to load course for editing. Please try again.', 'error');
             }
-        });
+        }
 
         // Image URL preview handler
         function setupImageUrlPreview(inputId, previewId, placeholderId) {
