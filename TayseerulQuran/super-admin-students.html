@@ -28,9 +28,9 @@
             left: 0;
             top: 80px;
             bottom: 0;
-            width: 250px;
+            width: 350px;
             background: #fff;
-            padding: 20px 0;
+            padding: 20px;
             z-index: 100;
             overflow-y: auto;
             box-shadow: 2px 0 10px rgba(0,0,0,0.1);
@@ -390,6 +390,37 @@
                     return;
                 }
                 
+                // First, check if user has related records that prevent deletion
+                try {
+                    const userResponse = await API.user.getById(id);
+                    if (userResponse.success && userResponse.data && userResponse.data.user) {
+                        const user = userResponse.data.user;
+                        
+                        // Check for related tutors
+                        if (user.tutorProfile || user.tutorId) {
+                            showMessage('Cannot delete this user because they have a tutor profile. Please remove the tutor profile first.', 'error');
+                            return;
+                        }
+                        
+                        // Check for related blog posts
+                        try {
+                            const blogResponse = await API.blog.getAll({ authorId: id, limit: 1 });
+                            if (blogResponse.success && blogResponse.data) {
+                                const posts = blogResponse.data.posts || blogResponse.data || [];
+                                if (posts.length > 0) {
+                                    showMessage('Cannot delete this user because they have blog posts. Please delete or reassign the blog posts first.', 'error');
+                                    return;
+                                }
+                            }
+                        } catch (e) {
+                            console.warn('Error checking blog posts:', e);
+                        }
+                    }
+                } catch (e) {
+                    console.warn('Error checking user details:', e);
+                }
+                
+                // Attempt to delete
                 const response = await API.user.delete(id);
                 
                 if (response.success) {
@@ -401,11 +432,24 @@
                         }
                     });
                 } else {
-                    showMessage(response.message || 'Failed to delete student', 'error');
+                    // Check for foreign key constraint errors
+                    const errorMsg = response.message || 'Failed to delete student';
+                    if (errorMsg.includes('foreign key') || errorMsg.includes('constraint')) {
+                        showMessage('Cannot delete this student because they have related records (tutor profile, blog posts, etc.). Please remove related records first.', 'error');
+                    } else {
+                        showMessage(errorMsg, 'error');
+                    }
                 }
             } catch (error) {
                 console.error('Error deleting student:', error);
-                showMessage(error.message || 'Failed to delete student. Please try again.', 'error');
+                const errorMsg = error.message || 'Failed to delete student. Please try again.';
+                
+                // Check for foreign key constraint errors
+                if (errorMsg.includes('foreign key') || errorMsg.includes('constraint') || errorMsg.includes('Cannot delete')) {
+                    showMessage('Cannot delete this student because they have related records (tutor profile, blog posts, enrollments, etc.). Please remove related records first or contact an administrator.', 'error');
+                } else {
+                    showMessage(errorMsg, 'error');
+                }
             }
         }
         
@@ -622,12 +666,17 @@
                 const firstName = nameParts[0] || '';
                 const lastName = nameParts.slice(1).join(' ') || '';
                 
+                // Build userData object, only including phone if it has a value
                 const userData = {
                     firstName: firstName,
                     lastName: lastName,
-                    email: email,
-                    phone: phone || null
+                    email: email
                 };
+                
+                // Only add phone if it's not empty (to avoid validation errors)
+                if (phone && phone.trim()) {
+                    userData.phone = phone.trim();
+                }
                 
                 const response = await API.user.update(currentEditingStudentId, userData);
                 
@@ -885,7 +934,8 @@
                     const fullName = `${firstName} ${lastName}`.trim() || student.email || 'Unknown';
                     const email = student.email || 'N/A';
                     const joinDate = student.createdAt ? new Date(student.createdAt).toLocaleDateString() : 'N/A';
-                    const profileImage = student.profileImage || `assets/images/author/author-0${(index % 6) + 1}.jpg`;
+                    // Use only author-01.jpg as fallback to avoid 404 errors
+                    const profileImage = student.profileImage || 'assets/images/author/author-01.jpg';
                     
                     // Get assigned teacher (if any) from the maps we created
                     const tutorId = tutorAssignmentMap[studentId];
