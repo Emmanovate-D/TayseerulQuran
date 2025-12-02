@@ -204,14 +204,9 @@
                             
                             <div class="mb-3">
                                 <label class="form-label">Assigned Teacher</label>
-                                <select class="form-control" id="editStudentTeacher">
+                                <select class="form-control" id="editStudentTutor">
                                     <option value="">Not Assigned</option>
                                     <!-- Tutor options will be appended here dynamically -->
-                                    <!-- The options below are rendered via JavaScript based on the tutor list -->
-                                    <!-- Example (to be inserted by JS):
-                                    <option value="1">Ahmed Ali</option>
-                                    <option value="2">Maryam Khan</option>
-                                    -->
                                 </select>
                             </div>
                         </form>
@@ -242,9 +237,12 @@
                                 <small class="text-muted">Hold Ctrl/Cmd to select multiple students</small>
                             </div>
                             <div class="mb-3">
-                                <label class="form-label">Tutor ID</label>
-                                <input type="number" class="form-control" id="assignTutorTutor" placeholder="Enter tutor ID" required>
-                                <small class="text-muted">Enter the ID of the approved tutor to assign</small>
+                                <label class="form-label">Select Tutor</label>
+                                <select class="form-control" id="assignTutorTutor" required>
+                                    <option value="">Loading tutors...</option>
+                                    <!-- Tutor options will be appended here dynamically -->
+                                </select>
+                                <small class="text-muted">Select an approved tutor to assign</small>
                             </div>
                         </form>
                     </div>
@@ -751,14 +749,22 @@
                     studentsSelect.append(`<option value="${student.id}">${fullName} (${student.email})</option>`);
                 });
                 
-                // Display available approved tutors info for reference
+                // Populate tutors dropdown with names
+                const tutorSelect = $('#assignTutorTutor');
+                tutorSelect.empty();
+                
                 if (approvedTutors.length === 0) {
+                    tutorSelect.append('<option value="">No approved tutors available</option>');
                     console.warn('No approved tutors available. Please approve tutors first.');
-                    $('#assignTutorTutor').attr('placeholder', 'No approved tutors available');
                 } else {
-                    const tutorIds = approvedTutors.map(t => t.id).join(', ');
-                    console.log(`Available approved tutor IDs: ${tutorIds}`);
-                    $('#assignTutorTutor').attr('placeholder', `Enter tutor ID (Available: ${tutorIds})`);
+                    tutorSelect.append('<option value="">Select a tutor...</option>');
+                    approvedTutors.forEach(tutor => {
+                        const user = tutor.user || {};
+                        const fullName = `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email || 'Unknown';
+                        const email = user.email ? ` (${user.email})` : '';
+                        tutorSelect.append(`<option value="${tutor.id}">${fullName}${email}</option>`);
+                    });
+                    console.log(`Loaded ${approvedTutors.length} approved tutor(s) for assignment`);
                 }
             } catch (error) {
                 console.error('Error loading assign tutor modal:', error);
@@ -790,7 +796,7 @@
                 }
                 
                 if (!tutorId || tutorId.trim() === '') {
-                    showMessage('Please enter a tutor ID', 'error');
+                    showMessage('Please select a tutor', 'error');
                     return;
                 }
                 
@@ -887,6 +893,8 @@
                     // Reset form
                     $('#assignTutorModal select[multiple]').val([]);
                     $('#assignTutorTutor').val('');
+                    // Reload students table to show updated tutor assignments
+                    loadStudents();
                     // Reload students to show updated assignments
                     await loadStudents();
                 } else {
@@ -940,11 +948,58 @@
                     userData.phone = phone.trim();
                 }
                 
+                // Update user first
                 const response = await API.user.update(currentEditingStudentId, userData);
                 
                 if (response.success) {
+                    // Update tutor assignment if tutor is selected
+                    if (tutorId && tutorId.trim() !== '') {
+                        try {
+                            // Get or create student profile
+                            const studentsWithProfilesResponse = await API.student.getAll({ limit: 10000 });
+                            let studentProfile = null;
+                            
+                            if (studentsWithProfilesResponse.success && studentsWithProfilesResponse.data) {
+                                const profiles = studentsWithProfilesResponse.data.students || studentsWithProfilesResponse.data || [];
+                                studentProfile = profiles.find(p => p.userId === currentEditingStudentId);
+                            }
+                            
+                            if (studentProfile) {
+                                // Update existing profile
+                                await API.student.update(studentProfile.id, {
+                                    tutorId: parseInt(tutorId)
+                                });
+                            } else {
+                                // Create new student profile with tutor
+                                await API.student.create({
+                                    userId: currentEditingStudentId,
+                                    tutorId: parseInt(tutorId)
+                                });
+                            }
+                        } catch (tutorError) {
+                            console.warn('Error updating tutor assignment:', tutorError);
+                            // Don't fail the whole update if tutor assignment fails
+                        }
+                    } else {
+                        // If tutor is cleared, remove tutor assignment
+                        try {
+                            const studentsWithProfilesResponse = await API.student.getAll({ limit: 10000 });
+                            if (studentsWithProfilesResponse.success && studentsWithProfilesResponse.data) {
+                                const profiles = studentsWithProfilesResponse.data.students || studentsWithProfilesResponse.data || [];
+                                const studentProfile = profiles.find(p => p.userId === currentEditingStudentId);
+                                if (studentProfile && studentProfile.tutorId) {
+                                    await API.student.update(studentProfile.id, {
+                                        tutorId: null
+                                    });
+                                }
+                            }
+                        } catch (tutorError) {
+                            console.warn('Error clearing tutor assignment:', tutorError);
+                        }
+                    }
+                    
                     showMessage('Student updated successfully!');
-            $('#editStudentModal').modal('hide');
+                    $('#editStudentModal').modal('hide');
                     currentEditingStudentId = null;
                     await loadStudents();
                 } else {
@@ -1114,6 +1169,37 @@
                     return;
                 }
                 
+                // Load tutors for the dropdown
+                const tutorsResponse = await API.tutor.getAll();
+                const tutors = tutorsResponse.success && tutorsResponse.data ? 
+                              (tutorsResponse.data.tutors || tutorsResponse.data || []) : [];
+                
+                // Filter only approved tutors
+                const approvedTutors = tutors.filter(tutor => {
+                    if (tutor.isApproved === true || tutor.isApproved === 1) {
+                        return true;
+                    }
+                    if (tutor.status && (tutor.status.toLowerCase() === 'approved' || tutor.status.toLowerCase() === 'active')) {
+                        return true;
+                    }
+                    if (tutor.approvalStatus && tutor.approvalStatus.toLowerCase() === 'approved') {
+                        return true;
+                    }
+                    return false;
+                });
+                
+                // Populate tutor dropdown
+                const tutorSelect = $('#editStudentTutor');
+                tutorSelect.empty();
+                tutorSelect.append('<option value="">Not Assigned</option>');
+                approvedTutors.forEach(tutor => {
+                    const user = tutor.user || {};
+                    const fullName = `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email || 'Unknown';
+                    const email = user.email ? ` (${user.email})` : '';
+                    tutorSelect.append(`<option value="${tutor.id}">${fullName}${email}</option>`);
+                });
+                
+                // Get student details
                 const response = await API.user.getById(studentId);
                 if (response.success && response.data && response.data.user) {
                     const student = response.data.user;
@@ -1124,6 +1210,20 @@
                     $('#editStudentFullName').val(fullName);
                     $('#editStudentEmail').val(email);
                     $('#editStudentPhone').val(phone);
+                    
+                    // Get and set assigned tutor if any
+                    try {
+                        const studentsWithProfilesResponse = await API.student.getAll({ limit: 10000 });
+                        if (studentsWithProfilesResponse.success && studentsWithProfilesResponse.data) {
+                            const studentsWithProfiles = studentsWithProfilesResponse.data.students || studentsWithProfilesResponse.data || [];
+                            const studentProfile = studentsWithProfiles.find(sp => sp.userId === studentId);
+                            if (studentProfile && studentProfile.tutorId) {
+                                tutorSelect.val(studentProfile.tutorId);
+                            }
+                        }
+                    } catch (e) {
+                        console.warn('Error loading assigned tutor:', e);
+                    }
                     
                     $('#editStudentModal').modal('show');
                 } else {
