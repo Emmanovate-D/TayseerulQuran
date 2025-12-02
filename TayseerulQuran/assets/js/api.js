@@ -101,7 +101,7 @@ async function apiRequest(endpoint, options = {}) {
     
     // Re-throw if it's already a proper Error object
     if (error instanceof Error) {
-      throw error;
+    throw error;
     }
     
     // Convert string errors to Error objects

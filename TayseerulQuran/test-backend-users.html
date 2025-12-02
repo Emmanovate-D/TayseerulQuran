@@ -51,7 +51,7 @@
         
         async function testHealth() {
             const resultDiv = document.getElementById('healthResult');
-            resultDiv.innerHTML = '<p>Testing... (This may take 30-60 seconds if Render service is sleeping)</p>';
+            resultDiv.innerHTML = '<p>⏳ Testing... (This may take 30-60 seconds if Render service is sleeping)</p>';
             
             try {
                 // Add timeout for Render free tier (can take up to 60s to wake up)
@@ -62,7 +62,9 @@
                     signal: controller.signal,
                     headers: {
                         'Accept': 'application/json'
-                    }
+                    },
+                    mode: 'cors',
+                    cache: 'no-cache'
                 });
                 
                 clearTimeout(timeoutId);
@@ -71,7 +73,15 @@
                     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
                 
-                const data = await response.json();
+                // Check if response is JSON
+                const contentType = response.headers.get('content-type');
+                let data;
+                if (contentType && contentType.includes('application/json')) {
+                    data = await response.json();
+                } else {
+                    const text = await response.text();
+                    data = { message: text, raw: true };
+                }
                 
                 resultDiv.innerHTML = `
                     <div class="success">
@@ -86,16 +96,21 @@
                 if (error.name === 'AbortError') {
                     errorMessage = 'Request timed out (90 seconds)';
                     additionalInfo = '<p><strong>⚠️ Render Free Tier:</strong> Services sleep after 15 minutes of inactivity. The first request can take 30-60 seconds to wake up. Try again in a moment.</p>';
-                } else if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+                } else if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError') || error.name === 'TypeError') {
                     additionalInfo = `
                         <p><strong>Possible causes:</strong></p>
                         <ul>
                             <li>Render service is sleeping (free tier) - wait 30-60 seconds and try again</li>
-                            <li>CORS issue - check if Vercel domain is allowed</li>
+                            <li>CORS issue - check if your domain is allowed in backend CORS config</li>
                             <li>Service is down - check Render dashboard</li>
+                            <li>Network connectivity issue</li>
                         </ul>
                         <p><a href="https://dashboard.render.com" target="_blank">Check Render Dashboard</a></p>
+                        <p><strong>Tip:</strong> If this is the first request after inactivity, wait 30-60 seconds and click "Retry Test"</p>
                     `;
+                } else if (error.message.includes('JSON')) {
+                    errorMessage = 'Invalid response format from server';
+                    additionalInfo = '<p>The server responded but the response was not valid JSON. Check server logs.</p>';
                 }
                 
                 resultDiv.innerHTML = `
@@ -113,19 +128,36 @@
             const resultsDiv = document.getElementById('loginResults');
             const testDiv = document.createElement('div');
             testDiv.className = 'test-section';
-            testDiv.innerHTML = `<p>Testing ${roleName} login...</p>`;
+            testDiv.innerHTML = `<p>⏳ Testing ${roleName} login... (may take 30-60s if backend is sleeping)</p>`;
             resultsDiv.appendChild(testDiv);
             
             try {
+                // Add timeout for Render free tier
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 90000); // 90 second timeout
+                
                 const response = await fetch(`${API_BASE}/api/auth/login`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ email, password })
+                    body: JSON.stringify({ email, password }),
+                    signal: controller.signal,
+                    mode: 'cors',
+                    cache: 'no-cache'
                 });
                 
-                const data = await response.json();
+                clearTimeout(timeoutId);
+                
+                // Check if response is JSON
+                const contentType = response.headers.get('content-type');
+                let data;
+                if (contentType && contentType.includes('application/json')) {
+                    data = await response.json();
+                } else {
+                    const text = await response.text();
+                    throw new Error(`Server returned non-JSON response: ${text.substring(0, 100)}`);
+                }
                 
                 if (response.ok && data.success) {
                     const user = data.data?.user || data.user;
@@ -158,9 +190,12 @@
                 let errorMsg = error.message;
                 let additionalInfo = '';
                 
-                if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+                if (error.name === 'AbortError') {
+                    errorMsg = 'Request timed out (90 seconds)';
+                    additionalInfo = '<p><em>Backend may be sleeping. Wait 30-60 seconds and try again after the health check succeeds.</em></p>';
+                } else if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError') || error.name === 'TypeError') {
                     errorMsg = 'Network error - Backend may be sleeping';
-                    additionalInfo = '<p><em>Render free tier services sleep after inactivity. First request may take 30-60 seconds.</em></p>';
+                    additionalInfo = '<p><em>Render free tier services sleep after inactivity. First request may take 30-60 seconds. Try running the health check first.</em></p>';
                 }
                 
                 testDiv.innerHTML = `

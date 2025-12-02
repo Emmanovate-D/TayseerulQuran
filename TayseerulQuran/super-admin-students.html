@@ -171,98 +171,13 @@
                                             </tr>
                                         </tbody>
                                     </table>
-                                </div>
-                            </div>
-                        </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- View Student Modal -->
-        <div class="modal fade" id="viewStudentModal" tabindex="-1">
-            <div class="modal-dialog modal-lg">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">Student Profile</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="row">
-                            <div class="col-md-4 text-center">
-                                <img src="assets/images/author/author-01.jpg" class="rounded-circle mb-3" width="150" height="150" alt="">
-                                <h5>John Doe</h5>
-                                <p class="text-muted">Student ID: STD001</p>
-                            </div>
-                            <div class="col-md-8">
-                                <table class="table table-borderless">
-                                    <tr>
-                                        <th>Email:</th>
-                                        <td>john.doe@example.com</td>
-                                    </tr>
-                                    <tr>
-                                        <th>Phone:</th>
-                                        <td>+1 234 567 8900</td>
-                                    </tr>
-                                    <tr>
-                                        <th>Enrolled Courses:</th>
-                                        <td>3</td>
-                                    </tr>
-                                    <tr>
-                                        <th>Assigned Teacher:</th>
-                                        <td>Sarah Johnson</td>
-                                    </tr>
-                                    <tr>
-                                        <th>Join Date:</th>
-                                        <td>2024-01-10</td>
-                                    </tr>
-                                    <tr>
-                                        <th>Status:</th>
-                                        <td><span class="badge bg-success">Active</span></td>
-                                    </tr>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+        
 
-        <!-- Assign Teacher Modal -->
-        <div class="modal fade" id="assignTeacherModal" tabindex="-1">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">Assign Students to Teacher</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                    </div>
-                    <div class="modal-body">
-                        <form>
-                            <div class="mb-3">
-                                <label class="form-label">Select Students</label>
-                                <select class="form-control" multiple size="5">
-                                    <option>John Doe (STD001)</option>
-                                    <option>Jane Smith (STD002)</option>
-                                    <option>Mike Johnson (STD003)</option>
-                                </select>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Select Teacher</label>
-                                <select class="form-control">
-                                    <option>John Smith</option>
-                                    <option>Sarah Johnson</option>
-                                    <option>Emily Davis</option>
-                                </select>
-                            </div>
-                        </form>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-sm btn-secondary px-3 py-2 small" data-bs-dismiss="modal" style="font-size: 0.75rem;">Cancel</button>
-                        <button type="button" class="btn btn-sm btn-primary px-3 py-2 small" onclick="assignTeacher()" style="font-size: 0.75rem;">Assign</button>
-                    </div>
-                </div>
-            </div>
-        </div>
 
         <!-- Edit Student Modal -->
         <div class="modal fade" id="editStudentModal" tabindex="-1">
@@ -282,17 +197,10 @@
                                 <label class="form-label">Email</label>
                                 <input type="email" class="form-control" value="john.doe@example.com">
                             </div>
-                            <div class="mb-3">
-                                <label class="form-label">Phone</label>
-                                <input type="tel" class="form-control" value="+1 234 567 8900">
-                            </div>
+                            
                             <div class="mb-3">
                                 <label class="form-label">Assigned Teacher</label>
-                                <select class="form-control">
-                                    <option>Sarah Johnson</option>
-                                    <option>John Smith</option>
-                                    <option>Emily Davis</option>
-                                </select>
+                                
                             </div>
                         </form>
                     </div>
@@ -622,7 +530,7 @@
                         console.warn('Assignment errors:', errors);
                     }
                     
-                    $('#assignTeacherModal').modal('hide');
+            $('#assignTeacherModal').modal('hide');
                     // Reset form
                     $('#assignTeacherModal select[multiple]').val([]);
                     $('#assignTeacherModal select:not([multiple])').val('');
@@ -682,7 +590,7 @@
                 
                 if (response.success) {
                     showMessage('Student updated successfully!');
-                    $('#editStudentModal').modal('hide');
+            $('#editStudentModal').modal('hide');
                     currentEditingStudentId = null;
                     await loadStudents();
                 } else {
