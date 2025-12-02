@@ -708,8 +708,22 @@
                 const tutors = tutorsResponse.success && tutorsResponse.data ? 
                               (tutorsResponse.data.tutors || tutorsResponse.data || []) : [];
                 
-                // Filter only approved tutors
-                const approvedTutors = tutors.filter(tutor => tutor.isApproved === true);
+                // Filter only approved tutors - check multiple possible approval status fields
+                const approvedTutors = tutors.filter(tutor => {
+                    // Check for isApproved field (boolean)
+                    if (tutor.isApproved === true || tutor.isApproved === 1) {
+                        return true;
+                    }
+                    // Check for status field (string)
+                    if (tutor.status && (tutor.status.toLowerCase() === 'approved' || tutor.status.toLowerCase() === 'active')) {
+                        return true;
+                    }
+                    // Check for approvalStatus field
+                    if (tutor.approvalStatus && tutor.approvalStatus.toLowerCase() === 'approved') {
+                        return true;
+                    }
+                    return false;
+                });
                 
                 // Populate students dropdown
                 const studentsSelect = $('#assignTeacherModal select[multiple]');
@@ -719,22 +733,26 @@
                     studentsSelect.append(`<option value="${student.id}">${fullName} (${student.email})</option>`);
                 });
                 
-                // Populate teachers dropdown
+                // Populate teachers dropdown - only show approved tutors
                 const teachersSelect = $('#assignTeacherModal select:not([multiple])');
                 teachersSelect.empty();
                 teachersSelect.append('<option value="">Select Teacher</option>');
-                approvedTutors.forEach(tutor => {
-                    if (tutor.user) {
-                        const fullName = `${tutor.user.firstName || ''} ${tutor.user.lastName || ''}`.trim();
-                        if (fullName) {
-                            teachersSelect.append(`<option value="${tutor.id}" data-user-id="${tutor.userId || tutor.user.id}">${fullName}</option>`);
-                        }
-                    }
-                });
                 
                 if (approvedTutors.length === 0) {
-                    teachersSelect.append('<option value="" disabled>No approved teachers available</option>');
+                    teachersSelect.append('<option value="" disabled>No approved teachers available. Please approve tutors first.</option>');
+                } else {
+                    approvedTutors.forEach(tutor => {
+                        if (tutor.user) {
+                            const fullName = `${tutor.user.firstName || ''} ${tutor.user.lastName || ''}`.trim();
+                            const email = tutor.user.email || '';
+                            if (fullName) {
+                                teachersSelect.append(`<option value="${tutor.id}" data-user-id="${tutor.userId || tutor.user.id}">${fullName}${email ? ' (' + email + ')' : ''}</option>`);
+                            }
+                        }
+                    });
                 }
+                
+                console.log(`Loaded ${approvedTutors.length} approved tutor(s) for assignment`);
             } catch (error) {
                 console.error('Error loading assign teacher modal:', error);
                 showMessage('Failed to load students and teachers. Please refresh the page.', 'error');
