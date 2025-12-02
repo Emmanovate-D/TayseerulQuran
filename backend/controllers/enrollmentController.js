@@ -9,7 +9,15 @@ const { Op } = require('sequelize');
 const enrollInCourse = async (req, res) => {
   try {
     const { courseId } = req.body;
-    const userId = req.userId;
+    const userId = req.userId || req.user?.id;
+
+    if (!userId) {
+      console.error('enrollInCourse: userId is undefined', { 
+        hasUserId: !!req.userId, 
+        hasUser: !!req.user 
+      });
+      return sendError(res, 'User ID not found in request', HTTP_STATUS.UNAUTHORIZED);
+    }
 
     if (!courseId) {
       return sendError(res, 'Course ID is required', HTTP_STATUS.BAD_REQUEST);
@@ -121,7 +129,16 @@ const enrollInCourse = async (req, res) => {
  */
 const getMyEnrollments = async (req, res) => {
   try {
-    const userId = req.userId;
+    const userId = req.userId || req.user?.id;
+
+    if (!userId) {
+      console.error('getMyEnrollments: userId is undefined', { 
+        hasUserId: !!req.userId, 
+        hasUser: !!req.user, 
+        user: req.user 
+      });
+      return sendError(res, 'User ID not found in request', HTTP_STATUS.UNAUTHORIZED);
+    }
 
     const enrollments = await StudentCourse.findAll({
       where: { studentId: userId },
