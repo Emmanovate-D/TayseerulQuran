@@ -242,16 +242,16 @@
                                 <small class="text-muted">Hold Ctrl/Cmd to select multiple students</small>
                             </div>
                             <div class="mb-3">
-                                <label class="form-label">Select Tutor</label>
-                                <option value="">Loading tutors...</option>
-                                </select>
+                                <label class="form-label">Tutor ID</label>
+                                <input type="number" class="form-control" id="assignTutorTutor" placeholder="Enter tutor ID" required>
+                                <small class="text-muted">Enter the ID of the approved tutor to assign</small>
                             </div>
                         </form>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-sm btn-secondary px-3 py-2 small" data-bs-dismiss="modal" style="font-size: 0.75rem;">Cancel</button>
                         <button type="button" class="btn btn-sm btn-primary px-3 py-2 small" onclick="assignTutor()" style="font-size: 0.75rem;">Assign Tutor</button>
-                    </div><select class="form-control" id="assignTutorTutor">
+                    </div>
                                     
                 </div>
             </div>
@@ -733,26 +733,15 @@
                     studentsSelect.append(`<option value="${student.id}">${fullName} (${student.email})</option>`);
                 });
                 
-                // Populate tutors dropdown - only show approved tutors
-                const tutorsSelect = $('#assignTutorModal select:not([multiple])');
-                tutorsSelect.empty();
-                tutorsSelect.append('<option value="">Select Tutor</option>');
-                
+                // Display available approved tutors info for reference
                 if (approvedTutors.length === 0) {
-                    tutorsSelect.append('<option value="" disabled>No approved tutors available. Please approve tutors first.</option>');
+                    console.warn('No approved tutors available. Please approve tutors first.');
+                    $('#assignTutorTutor').attr('placeholder', 'No approved tutors available');
                 } else {
-                    approvedTutors.forEach(tutor => {
-                        if (tutor.user) {
-                            const fullName = `${tutor.user.firstName || ''} ${tutor.user.lastName || ''}`.trim();
-                            const email = tutor.user.email || '';
-                            if (fullName) {
-                                tutorsSelect.append(`<option value="${tutor.id}" data-user-id="${tutor.userId || tutor.user.id}">${fullName}${email ? ' (' + email + ')' : ''}</option>`);
-                            }
-                        }
-                    });
+                    const tutorIds = approvedTutors.map(t => t.id).join(', ');
+                    console.log(`Available approved tutor IDs: ${tutorIds}`);
+                    $('#assignTutorTutor').attr('placeholder', `Enter tutor ID (Available: ${tutorIds})`);
                 }
-                
-                console.log(`Loaded ${approvedTutors.length} approved tutor(s) for assignment`);
             } catch (error) {
                 console.error('Error loading assign tutor modal:', error);
                 showMessage('Failed to load students and tutors. Please refresh the page.', 'error');
@@ -775,16 +764,15 @@
                     }
                 });
                 
-                const tutorOption = $('#assignTutorModal select:not([multiple]) option:selected');
-                const tutorId = tutorOption.val();
+                const tutorId = $('#assignTutorTutor').val();
                 
                 if (selectedStudents.length === 0) {
                     showMessage('Please select at least one student', 'error');
                     return;
                 }
                 
-                if (!tutorId) {
-                    showMessage('Please select a tutor', 'error');
+                if (!tutorId || tutorId.trim() === '') {
+                    showMessage('Please enter a tutor ID', 'error');
                     return;
                 }
                 
@@ -880,7 +868,7 @@
             $('#assignTutorModal').modal('hide');
                     // Reset form
                     $('#assignTutorModal select[multiple]').val([]);
-                    $('#assignTutorModal select:not([multiple])').val('');
+                    $('#assignTutorTutor').val('');
                     // Reload students to show updated assignments
                     await loadStudents();
                 } else {
