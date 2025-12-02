@@ -333,12 +333,25 @@
                 
                 if (response.success) {
                     showMessage('Student deleted successfully!');
-                    $(`tr[data-student-id="${id}"]`).fadeOut(300, function() {
-                        $(this).remove();
-                        if ($('#studentsTableBody tr').length === 0) {
-                            loadStudents();
-                        }
-                    });
+                    
+                    // Find the row within the table body - scope to table body to ensure correct selection
+                    const $row = $(`#studentsTableBody tr[data-student-id="${id}"]`);
+                    
+                    if ($row.length > 0) {
+                        // Remove the row with fade animation
+                        $row.fadeOut(300, function() {
+                            $(this).remove();
+                            // Reload if table is empty
+                            const remainingRows = $('#studentsTableBody tr').length;
+                            if (remainingRows === 0) {
+                                loadStudents();
+                            }
+                        });
+                    } else {
+                        // If row not found by selector, reload the entire table
+                        console.warn('Row not found with selector, reloading table...');
+                        loadStudents();
+                    }
                 } else {
                     // Check for foreign key constraint errors
                     const errorMsg = response.message || 'Failed to delete student';
@@ -760,15 +773,30 @@
                 
                 console.log('Loading students...');
                 
-                // Load all students
-                const studentsResponse = await API.user.getAll({ role: 'student', limit: 1000 });
+                // Load all students with error handling
+                let studentsResponse;
+                try {
+                    studentsResponse = await API.user.getAll({ role: 'student', limit: 1000 });
+                } catch (error) {
+                    console.error('Error loading students from API:', error);
+                    $('#studentsTableBody').html('<tr><td colspan="7" class="text-center text-danger">Error loading students. Please refresh the page.</td></tr>');
+                    return;
+                }
+                
                 const students = studentsResponse.success && studentsResponse.data ? 
                                (studentsResponse.data.users || studentsResponse.data || []) : [];
                 
-                // Load all enrollments
-                const enrollmentsResponse = await API.enrollment.getAll({ limit: 10000 });
-                const enrollments = enrollmentsResponse.success && enrollmentsResponse.data ? 
-                                   (enrollmentsResponse.data.enrollments || enrollmentsResponse.data || []) : [];
+                // Load all enrollments with error handling
+                let enrollmentsResponse;
+                let enrollments = [];
+                try {
+                    enrollmentsResponse = await API.enrollment.getAll({ limit: 10000 });
+                    enrollments = enrollmentsResponse.success && enrollmentsResponse.data ? 
+                               (enrollmentsResponse.data.enrollments || enrollmentsResponse.data || []) : [];
+                } catch (error) {
+                    console.warn('Error loading enrollments (continuing without enrollment data):', error);
+                    // Continue without enrollments if this fails - not critical
+                }
                 
                 // Load all students with their profiles to get tutor assignments
                 let studentsWithProfiles = [];
