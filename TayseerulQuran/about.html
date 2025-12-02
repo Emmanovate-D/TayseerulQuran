@@ -1001,6 +1001,43 @@
     <!-- API Service -->
     <script src="assets/js/api.js"></script>
     
+    <!-- Super Admin Protection - Redirect super admin to dashboard -->
+    <script>
+        (function() {
+            // Wait for API to load
+            if (typeof API === 'undefined') {
+                setTimeout(arguments.callee, 100);
+                return;
+            }
+            
+            const token = API.config.getAuthToken();
+            const user = API.config.getUser();
+            
+            // Only check if user is logged in
+            if (!token || !user) {
+                return; // Not logged in, allow access
+            }
+            
+            // Check for super_admin role
+            let hasSuperAdminRole = false;
+            
+            if (user.roles && Array.isArray(user.roles)) {
+                hasSuperAdminRole = user.roles.some(role => {
+                    const roleName = (role.name || role).toLowerCase();
+                    return roleName === 'super_admin';
+                });
+            } else if (user.role) {
+                hasSuperAdminRole = user.role.toLowerCase() === 'super_admin';
+            }
+            
+            // If super admin, redirect to dashboard
+            if (hasSuperAdminRole) {
+                console.log('Super admin detected on regular page, redirecting to dashboard');
+                window.location.href = 'super-admin-dashboard.html';
+            }
+        })();
+    </script>
+    
     <!-- Auth Header Script - Updates Sign In/Sign Up to Logout when logged in -->
     <script src="assets/js/auth-header.js"></script>
     

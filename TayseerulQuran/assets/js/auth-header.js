@@ -175,6 +175,34 @@
     function handleLogout() {
         try {
             if (confirm('Are you sure you want to logout?')) {
+                // Get user info to check role before clearing
+                let isSuperAdmin = false;
+                try {
+                    let user = null;
+                    if (typeof API !== 'undefined' && API.config) {
+                        user = API.config.getUser();
+                    } else {
+                        const userStr = safeLocalStorageGet('user');
+                        if (userStr) {
+                            user = JSON.parse(userStr);
+                        }
+                    }
+                    
+                    // Check if user is super admin
+                    if (user) {
+                        if (user.roles && Array.isArray(user.roles)) {
+                            isSuperAdmin = user.roles.some(role => {
+                                const roleName = (role.name || role).toLowerCase();
+                                return roleName === 'super_admin';
+                            });
+                        } else if (user.role) {
+                            isSuperAdmin = user.role.toLowerCase() === 'super_admin';
+                        }
+                    }
+                } catch (e) {
+                    console.warn('Error checking user role:', e);
+                }
+                
                 // Clear authentication data using API if available
                 try {
                     if (typeof API !== 'undefined' && API.config) {
@@ -194,19 +222,20 @@
                 safeLocalStorageRemove('user');
                 safeSessionStorageClear();
                 
-                // Redirect to home page
+                // Redirect based on role - super admin goes to login, others to home
+                const redirectUrl = isSuperAdmin ? 'login.html' : 'index.html';
                 try {
-                    window.location.href = 'index.html';
+                    window.location.href = redirectUrl;
                 } catch (e) {
                     // Fallback if href assignment fails
-                    window.location = 'index.html';
+                    window.location = redirectUrl;
                 }
             }
         } catch (error) {
             console.error('Error during logout:', error);
-            // Still try to redirect
+            // Still try to redirect to login as fallback
             try {
-                window.location.href = 'index.html';
+                window.location.href = 'login.html';
             } catch (e) {
                 console.error('Failed to redirect:', e);
             }
