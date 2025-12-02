@@ -593,6 +593,217 @@
     
     <!-- Hide Pages Nav Script - Hides Pages menu when logged in -->
     <script src="assets/js/hide-pages-nav.js"></script>
+    
+    <!-- Courses Loading Script -->
+    <script>
+    $(document).ready(function() {
+        let allCourses = [];
+        let filteredCourses = [];
+
+        // Load courses from API
+        async function loadCourses() {
+            try {
+                if (typeof API === 'undefined' || typeof API.course === 'undefined') {
+                    console.error('API not loaded');
+                    $('#coursesGrid').html('<div class="col-12 text-center py-5"><p class="text-danger">API not loaded. Please refresh the page.</p></div>');
+                    return;
+                }
+
+                console.log('Loading courses from API...');
+                const response = await API.course.getAll();
+                console.log('API Response:', response);
+
+                if (response.success && response.data) {
+                    allCourses = response.data.courses || response.data || [];
+                    console.log('All courses loaded:', allCourses.length);
+
+                    // Filter only published and active courses
+                    allCourses = allCourses.filter(course => course.isPublished !== false && course.isActive !== false);
+                    console.log('Filtered courses (published & active):', allCourses.length);
+
+                    filteredCourses = [...allCourses];
+                    renderCourses();
+                    updateCoursesCount();
+                    populateCategoryFilter();
+                } else {
+                    console.error('Failed to load courses:', response);
+                    $('#coursesGrid').html('<div class="col-12 text-center py-5"><p class="text-danger">Failed to load courses. Please try again later.</p></div>');
+                }
+            } catch (error) {
+                console.error('Error loading courses:', error);
+                $('#coursesGrid').html('<div class="col-12 text-center py-5"><p class="text-danger">Error loading courses. Please refresh the page.</p></div>');
+            }
+        }
+
+        // Render courses to the grid
+        function renderCourses() {
+            const grid = $('#coursesGrid');
+            grid.empty();
+
+            if (filteredCourses.length === 0) {
+                grid.html('<div class="col-12 text-center py-5"><p class="text-muted">No courses found.</p></div>');
+                return;
+            }
+
+            filteredCourses.forEach(course => {
+                const courseCard = createCourseCard(course);
+                grid.append(courseCard);
+            });
+        }
+
+        // Create course card HTML
+        function createCourseCard(course) {
+            const instructorName = course.tutor && course.tutor.user
+                ? `${course.tutor.user.firstName || ''} ${course.tutor.user.lastName || ''}`.trim()
+                : 'No Instructor';
+            const instructorImage = course.tutor && course.tutor.user && course.tutor.user.profileImage
+                ? course.tutor.user.profileImage
+                : 'assets/images/author/author-01.jpg';
+            const courseImage = course.thumbnail || 'assets/images/courses/courses-01.jpg';
+            const price = course.price && parseFloat(course.price) > 0
+                ? `$${parseFloat(course.price).toFixed(2)}`
+                : 'Free';
+            const rating = course.rating ? parseFloat(course.rating).toFixed(1) : '0.0';
+            const ratingPercent = course.rating ? (parseFloat(course.rating) / 5 * 100) : 0;
+            const category = course.category || 'General';
+            const duration = course.duration ? `${course.duration} hrs` : 'N/A';
+            const enrollmentCount = course.enrollmentCount || 0;
+
+            return `
+                <div class="col-lg-4 col-md-6 mb-4">
+                    <div class="single-courses">
+                        <div class="courses-images">
+                            <a href="courses-details.html?id=${course.id}">
+                                <img src="${courseImage}" alt="${course.title || 'Course'}" onerror="this.src='assets/images/courses/courses-01.jpg'">
+                            </a>
+                        </div>
+                        <div class="courses-content">
+                            <div class="courses-author">
+                                <div class="author">
+                                    <div class="author-thumb">
+                                        <a href="#">
+                                            <img src="${instructorImage}" alt="${instructorName}" onerror="this.src='assets/images/author/author-01.jpg'">
+                                        </a>
+                                    </div>
+                                    <div class="author-name">
+                                        <a class="name" href="#">${instructorName}</a>
+                                    </div>
+                                </div>
+                                <div class="tag">
+                                    <a href="#">${category}</a>
+                                </div>
+                            </div>
+                            <h4 class="title">
+                                <a href="courses-details.html?id=${course.id}">${course.title || 'Untitled Course'}</a>
+                            </h4>
+                            <p class="text-muted" style="font-size: 0.9rem; margin: 10px 0;">${(course.description || '').substring(0, 100)}${course.description && course.description.length > 100 ? '...' : ''}</p>
+                            <div class="courses-meta">
+                                <span><i class="icofont-clock-time"></i> ${duration}</span>
+                                <span><i class="icofont-read-book"></i> ${enrollmentCount} Enrolled</span>
+                            </div>
+                            <div class="courses-price-review">
+                                <div class="courses-price">
+                                    <span class="sale-parice">${price}</span>
+                                </div>
+                                <div class="courses-review">
+                                    <span class="rating-count">${rating}</span>
+                                    <span class="rating-star">
+                                        <span class="rating-bar" style="width: ${ratingPercent}%;"></span>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Update courses count
+        function updateCoursesCount() {
+            const count = filteredCourses.length;
+            $('#coursesCount').text(`${count} course${count !== 1 ? 's' : ''} found`);
+        }
+
+        // Populate category filter
+        function populateCategoryFilter() {
+            const categoryFilter = $('#categoryFilter');
+            const categories = [...new Set(allCourses.map(c => c.category).filter(Boolean))].sort();
+            
+            categories.forEach(category => {
+                categoryFilter.append(`<option value="${category}">${category}</option>`);
+            });
+        }
+
+        // Apply filters
+        function applyFilters() {
+            const searchTerm = $('#courseSearchInput').val().toLowerCase().trim();
+            const category = $('#categoryFilter').val();
+            const level = $('#levelFilter').val();
+            const sort = $('#sortFilter').val();
+
+            filteredCourses = allCourses.filter(course => {
+                // Search filter
+                if (searchTerm) {
+                    const matchesSearch = 
+                        (course.title && course.title.toLowerCase().includes(searchTerm)) ||
+                        (course.description && course.description.toLowerCase().includes(searchTerm)) ||
+                        (course.category && course.category.toLowerCase().includes(searchTerm));
+                    if (!matchesSearch) return false;
+                }
+
+                // Category filter
+                if (category && course.category !== category) {
+                    return false;
+                }
+
+                // Level filter
+                if (level && course.level !== level) {
+                    return false;
+                }
+
+                return true;
+            });
+
+            // Sort
+            if (sort === 'oldest') {
+                filteredCourses.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+            } else if (sort === 'price-low') {
+                filteredCourses.sort((a, b) => (parseFloat(a.price) || 0) - (parseFloat(b.price) || 0));
+            } else if (sort === 'price-high') {
+                filteredCourses.sort((a, b) => (parseFloat(b.price) || 0) - (parseFloat(a.price) || 0));
+            } else {
+                // newest (default)
+                filteredCourses.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            }
+
+            renderCourses();
+            updateCoursesCount();
+        }
+
+        // Event listeners
+        $('#courseSearchBtn').on('click', applyFilters);
+        $('#courseSearchInput').on('keypress', function(e) {
+            if (e.which === 13) {
+                e.preventDefault();
+                applyFilters();
+            }
+        });
+        $('#categoryFilter, #levelFilter, #sortFilter').on('change', applyFilters);
+
+        // Load courses on page load
+        if (typeof API !== 'undefined') {
+            loadCourses();
+        } else {
+            setTimeout(() => {
+                if (typeof API !== 'undefined') {
+                    loadCourses();
+                } else {
+                    $('#coursesGrid').html('<div class="col-12 text-center py-5"><p class="text-danger">API not loaded. Please refresh the page.</p></div>');
+                }
+            }, 1000);
+        }
+    });
+    </script>
 
 </body>
 
