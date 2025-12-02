@@ -194,16 +194,21 @@
                         <form>
                             <div class="mb-3">
                                 <label class="form-label">Full Name</label>
-                                <input type="text" class="form-control" value="John Doe">
+                                <input type="text" class="form-control" id="editStudentFullName" required>
                             </div>
                             <div class="mb-3">
                                 <label class="form-label">Email</label>
-                                <input type="email" class="form-control" value="john.doe@example.com">
+                                <input type="email" class="form-control" id="editStudentEmail" required>
                             </div>
-                            
+                            <div class="mb-3">
+                                <label class="form-label">Phone</label>
+                                <input type="tel" class="form-control" id="editStudentPhone" placeholder="Optional">
+                            </div>
                             <div class="mb-3">
                                 <label class="form-label">Assigned Teacher</label>
-                                
+                                <select class="form-control" id="editStudentTeacher">
+                                    <option value="">Not Assigned</option>
+                                </select>
                             </div>
                         </form>
                     </div>
@@ -722,10 +727,11 @@
                 }
                 
                 const form = $('#editStudentModal form');
-                const fullName = form.find('input[type="text"]').first().val().trim();
-                const email = form.find('input[type="email"]').val().trim();
-                const phone = form.find('input[type="tel"]').val().trim();
-                const teacherId = form.find('select').val();
+                const fullName = $('#editStudentFullName').val() ? $('#editStudentFullName').val().trim() : '';
+                const email = $('#editStudentEmail').val() ? $('#editStudentEmail').val().trim() : '';
+                const phoneInput = $('#editStudentPhone');
+                const phone = phoneInput.length > 0 && phoneInput.val() ? phoneInput.val().trim() : '';
+                const teacherId = $('#editStudentTeacher').val();
                 
                 if (!fullName || !email) {
                     showMessage('Please fill in all required fields', 'error');
@@ -896,10 +902,9 @@
                     const email = student.email || '';
                     const phone = student.phone || '';
                     
-                    const form = $('#editStudentModal form');
-                    form.find('input[type="text"]').first().val(fullName);
-                    form.find('input[type="email"]').val(email);
-                    form.find('input[type="tel"]').val(phone);
+                    $('#editStudentFullName').val(fullName);
+                    $('#editStudentEmail').val(email);
+                    $('#editStudentPhone').val(phone);
                     
                     $('#editStudentModal').modal('show');
                 } else {
