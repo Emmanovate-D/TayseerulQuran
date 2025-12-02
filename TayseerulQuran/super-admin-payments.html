@@ -29,9 +29,9 @@
             left: 0;
             top: 80px;
             bottom: 0;
-            width: 250px;
+            width: 350px;
             background: #fff;
-            padding: 20px 0;
+            padding: 20px;
             z-index: 100;
             overflow-y: auto;
             box-shadow: 2px 0 10px rgba(0,0,0,0.1);
@@ -97,7 +97,10 @@
                 <div class="login-header-logo">
                     <a href="super-admin-dashboard.html"><img src="assets/images/logo-icon.png" alt="Logo"></a>
                 </div>
-                <div class="login-header-action ml-auto">
+                <div class="login-header-action ml-auto d-flex align-items-center gap-3">
+                    <button class="btn btn-sm btn-outline-danger px-3 py-2" onclick="handleLogout()" style="font-size: 0.75rem;">
+                        <i class="icofont-logout me-1"></i> Logout
+                    </button>
                     <a class="action author" href="#" id="userProfileLink">
                         <img id="userProfileImage" src="assets/images/author/author-07.jpg" alt="User">
                     </a>
@@ -109,7 +112,7 @@
                         </button>
                         <ul class="dropdown-menu">
                             <li><a href="super-admin-dashboard.html"><i class="icofont-home"></i> Dashboard</a></li>
-                            <li><a href="#" onclick="if(typeof API !== 'undefined' && API.auth) { API.auth.logout(); } else { window.location.href = 'login.html'; } return false;"><i class="icofont-logout"></i> Sign Out</a></li>
+                            <li><a href="#" onclick="handleLogout(); return false;"><i class="icofont-logout"></i> Sign Out</a></li>
                         </ul>
                     </div>
                 </div>
@@ -404,6 +407,28 @@
             
             console.log('Super admin access granted');
         })();
+        
+        // Logout function
+        function handleLogout() {
+            if (confirm('Are you sure you want to logout?')) {
+                try {
+                    if (typeof API !== 'undefined' && API.auth && API.auth.logout) {
+                        API.auth.logout();
+                    } else {
+                        // Fallback if API not loaded
+                        localStorage.removeItem('authToken');
+                        localStorage.removeItem('user');
+                        window.location.href = 'login.html';
+                    }
+                } catch (error) {
+                    console.error('Error during logout:', error);
+                    // Fallback logout
+                    localStorage.removeItem('authToken');
+                    localStorage.removeItem('user');
+                    window.location.href = 'login.html';
+                }
+            }
+        }
         
         // Initialize active menu on page load
         $(document).ready(function() {

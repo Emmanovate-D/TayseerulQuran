@@ -31,9 +31,9 @@
             left: 0;
             top: 80px;
             bottom: 0;
-            width: 250px;
+            width: 350px;
             background: #fff;
-            padding: 20px 0;
+            padding: 20px;
             z-index: 100;
             overflow-y: auto;
             box-shadow: 2px 0 10px rgba(0,0,0,0.1);
@@ -109,7 +109,10 @@
                     </div>
                 </div>
 
-                <div class="login-header-action ml-auto">
+                <div class="login-header-action ml-auto d-flex align-items-center gap-3">
+                    <button class="btn btn-sm btn-outline-danger px-3 py-2" onclick="handleLogout()" style="font-size: 0.75rem;">
+                        <i class="icofont-logout me-1"></i> Logout
+                    </button>
                     <div class="dropdown">
                         <button class="action notification" data-bs-toggle="dropdown">
                             <i class="flaticon-notification"></i>
@@ -153,7 +156,7 @@
                         <ul class="dropdown-menu">
                             <li><a href="#"><i class="icofont-user"></i> Profile</a></li>
                             <li><a href="#"><i class="icofont-settings"></i> Settings</a></li>
-                            <li><a href="login.html"><i class="icofont-logout"></i> Sign Out</a></li>
+                            <li><a href="#" onclick="handleLogout(); return false;"><i class="icofont-logout"></i> Sign Out</a></li>
                         </ul>
                     </div>
                 </div>
@@ -834,6 +837,28 @@
             } catch (error) {
                 console.error('Error loading recent enrollments:', error);
                 $('#recentEnrollmentsBody').html(`<tr><td colspan="5" class="text-center text-danger">Error loading enrollments: ${error.message || 'Unknown error'}</td></tr>`);
+            }
+        }
+        
+        // Logout function
+        function handleLogout() {
+            if (confirm('Are you sure you want to logout?')) {
+                try {
+                    if (typeof API !== 'undefined' && API.auth && API.auth.logout) {
+                        API.auth.logout();
+                    } else {
+                        // Fallback if API not loaded
+                        localStorage.removeItem('authToken');
+                        localStorage.removeItem('user');
+                        window.location.href = 'login.html';
+                    }
+                } catch (error) {
+                    console.error('Error during logout:', error);
+                    // Fallback logout
+                    localStorage.removeItem('authToken');
+                    localStorage.removeItem('user');
+                    window.location.href = 'login.html';
+                }
             }
         }
         

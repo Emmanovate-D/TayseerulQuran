@@ -28,10 +28,10 @@
             left: 0;
             top: 80px;
             bottom: 0;
-            width: 250px;
+            width: 350px;
             background: #fff;
-            padding: 20px ;
-            padding-left: 20px;
+            padding: 20px;
+    
             z-index: 100;
             overflow-y: auto;
             box-shadow: 2px 0 10px rgba(0,0,0,0.1);
@@ -98,7 +98,10 @@
                 <div class="login-header-logo">
                     <a href="super-admin-dashboard.html"><img src="assets/images/logo-icon.png" alt="Logo"></a>
                 </div>
-                <div class="login-header-action ml-auto">
+                <div class="login-header-action ml-auto d-flex align-items-center gap-3">
+                    <button class="btn btn-sm btn-outline-danger px-3 py-2" onclick="handleLogout()" style="font-size: 0.75rem;">
+                        <i class="icofont-logout me-1"></i> Logout
+                    </button>
                     <a class="action author" href="#">
                         <img src="assets/images/author/author-07.jpg" alt="Author">
                     </a>
@@ -110,7 +113,7 @@
                         </button>
                         <ul class="dropdown-menu">
                             <li><a href="super-admin-dashboard.html"><i class="icofont-home"></i> Dashboard</a></li>
-                            <li><a href="login.html"><i class="icofont-logout"></i> Sign Out</a></li>
+                            <li><a href="#" onclick="handleLogout(); return false;"><i class="icofont-logout"></i> Sign Out</a></li>
                         </ul>
                     </div>
                 </div>
@@ -706,6 +709,28 @@
             });
         }
 
+        // Logout function
+        function handleLogout() {
+            if (confirm('Are you sure you want to logout?')) {
+                try {
+                    if (typeof API !== 'undefined' && API.auth && API.auth.logout) {
+                        API.auth.logout();
+                    } else {
+                        // Fallback if API not loaded
+                        localStorage.removeItem('authToken');
+                        localStorage.removeItem('user');
+                        window.location.href = 'login.html';
+                    }
+                } catch (error) {
+                    console.error('Error during logout:', error);
+                    // Fallback logout
+                    localStorage.removeItem('authToken');
+                    localStorage.removeItem('user');
+                    window.location.href = 'login.html';
+                }
+            }
+        }
+        
         // Load roles and permissions on page load
         $(document).ready(async function() {
             // Set active menu item
@@ -832,6 +857,52 @@
                     return;
                 }
                 
+                // Check for related records before attempting deletion
+                try {
+                    const userResponse = await API.user.getById(id);
+                    if (userResponse.success && userResponse.data && userResponse.data.user) {
+                        const user = userResponse.data.user;
+                        
+                        // Check for related tutors
+                        if (user.tutorProfile || user.tutorId) {
+                            showMessage('Cannot delete this admin because they have a tutor profile. Please remove the tutor profile first.', 'error');
+                            return;
+                        }
+                        
+                        // Check for related blog posts
+                        try {
+                            const blogResponse = await API.blog.getAll({ authorId: id, limit: 1 });
+                            if (blogResponse.success && blogResponse.data) {
+                                const posts = blogResponse.data.posts || blogResponse.data || [];
+                                if (posts.length > 0) {
+                                    showMessage('Cannot delete this admin because they have blog posts. Please delete or reassign the blog posts first.', 'error');
+                                    return;
+                                }
+                            }
+                        } catch (e) {
+                            console.warn('Error checking blog posts:', e);
+                        }
+                        
+                        // Check for enrollments
+                        try {
+                            if (API.enrollment) {
+                                const enrollmentsResponse = await API.enrollment.getAll({ userId: id, limit: 1 });
+                                if (enrollmentsResponse.success && enrollmentsResponse.data) {
+                                    const enrollments = enrollmentsResponse.data.enrollments || enrollmentsResponse.data || [];
+                                    if (enrollments.length > 0) {
+                                        showMessage('Cannot delete this admin because they have active enrollments. Please cancel enrollments first.', 'error');
+                                        return;
+                                    }
+                                }
+                            }
+                        } catch (e) {
+                            console.warn('Error checking enrollments:', e);
+                        }
+                    }
+                } catch (e) {
+                    console.warn('Error checking user details:', e);
+                }
+                
                 const response = await API.user.delete(id);
                 
                 if (response.success) {
@@ -845,11 +916,21 @@
                         }
                     });
                 } else {
-                    showMessage(response.message || 'Failed to delete admin', 'error');
+                    const errorMsg = response.message || 'Failed to delete admin';
+                    if (errorMsg.includes('foreign key') || errorMsg.includes('constraint') || errorMsg.includes('Cannot delete')) {
+                        showMessage('Cannot delete this admin because they have related records (tutor profile, blog posts, enrollments, etc.). Please remove related records first or contact an administrator.', 'error');
+                    } else {
+                        showMessage(errorMsg, 'error');
+                    }
                 }
             } catch (error) {
                 console.error('Error deleting admin:', error);
-                showMessage(error.message || 'Failed to delete admin. Please try again.', 'error');
+                let errorMessage = error.message || 'Failed to delete admin. Please try again.';
+                if (errorMessage.includes('foreign key') || errorMessage.includes('constraint') || errorMessage.includes('Cannot delete')) {
+                    showMessage('Cannot delete this admin because they have related records (tutor profile, blog posts, enrollments, etc.). Please remove related records first or contact an administrator.', 'error');
+                } else {
+                    showMessage(errorMessage, 'error');
+                }
             }
         }
     </script>
