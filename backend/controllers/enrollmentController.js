@@ -9,7 +9,7 @@ const { Op } = require('sequelize');
 const enrollInCourse = async (req, res) => {
   try {
     const { courseId } = req.body;
-    const userId = req.user.userId;
+    const userId = req.userId;
 
     if (!courseId) {
       return sendError(res, 'Course ID is required', HTTP_STATUS.BAD_REQUEST);
@@ -121,7 +121,7 @@ const enrollInCourse = async (req, res) => {
  */
 const getMyEnrollments = async (req, res) => {
   try {
-    const userId = req.user.userId;
+    const userId = req.userId;
 
     const enrollments = await StudentCourse.findAll({
       where: { studentId: userId },
@@ -235,7 +235,7 @@ const getAllEnrollments = async (req, res) => {
 const getEnrollmentById = async (req, res) => {
   try {
     const { id } = req.params;
-    const userId = req.user.userId;
+    const userId = req.userId;
 
     const enrollment = await StudentCourse.findByPk(id, {
       include: [
@@ -278,7 +278,7 @@ const updateEnrollment = async (req, res) => {
   try {
     const { id } = req.params;
     const { status, progress, rating, review } = req.body;
-    const userId = req.user.userId;
+    const userId = req.userId;
 
     const enrollment = await StudentCourse.findByPk(id);
     if (!enrollment) {
@@ -342,7 +342,7 @@ const updateEnrollment = async (req, res) => {
 const cancelEnrollment = async (req, res) => {
   try {
     const { id } = req.params;
-    const userId = req.user.userId;
+    const userId = req.userId;
 
     const enrollment = await StudentCourse.findByPk(id, {
       include: [{ model: Course, as: 'Course' }]
