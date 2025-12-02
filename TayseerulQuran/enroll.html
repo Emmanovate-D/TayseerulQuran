@@ -302,7 +302,32 @@
                     return;
                 }
 
-                // Store enrollment data in sessionStorage for checkout
+                const coursePrice = parseFloat(currentCourse.price || 0);
+                
+                // If course is free, enroll directly without payment
+                if (coursePrice === 0) {
+                    try {
+                        // Enroll directly via enrollment API
+                        const enrollmentResponse = await API.enrollment.enroll(currentCourse.id);
+                        
+                        if (enrollmentResponse.success || enrollmentResponse.data) {
+                            showMessage('Successfully enrolled in course!', 'success');
+                            setTimeout(() => {
+                                window.location.href = `enrol-success.html?course=${currentCourse.id}&status=completed`;
+                            }, 1500);
+                        } else {
+                            throw new Error(enrollmentResponse.message || 'Enrollment failed');
+                        }
+                    } catch (enrollError) {
+                        console.error('Direct enrollment error:', enrollError);
+                        showMessage(enrollError.message || 'Failed to enroll. Please try again.', 'error');
+                        enrollBtn.disabled = false;
+                        enrollBtn.textContent = originalText;
+                    }
+                    return;
+                }
+
+                // For paid courses, store enrollment data and redirect to checkout
                 const enrollmentData = {
                     courseId: currentCourse.id,
                     course: currentCourse,

@@ -47,6 +47,7 @@ const enrollInCourse = async (req, res) => {
     const { paymentId, paymentMethod } = req.body;
     let payment = null;
 
+    // Only require payment if course has a price > 0
     if (course.price > 0) {
       if (!paymentId) {
         return sendError(res, 'Payment is required for this course', HTTP_STATUS.BAD_REQUEST);
