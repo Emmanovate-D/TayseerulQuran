@@ -206,6 +206,12 @@
                                 <label class="form-label">Assigned Teacher</label>
                                 <select class="form-control" id="editStudentTeacher">
                                     <option value="">Not Assigned</option>
+                                    <!-- Tutor options will be appended here dynamically -->
+                                    <!-- The options below are rendered via JavaScript based on the tutor list -->
+                                    <!-- Example (to be inserted by JS):
+                                    <option value="1">Ahmed Ali</option>
+                                    <option value="2">Maryam Khan</option>
+                                    -->
                                 </select>
                             </div>
                         </form>
@@ -1083,18 +1089,30 @@
                 
                 console.log('Loading students...');
                 
-                // Load all students with error handling
+                // Load all users with error handling
                 let studentsResponse;
                 try {
-                    studentsResponse = await API.user.getAll({ role: 'student', limit: 1000 });
+                    studentsResponse = await API.user.getAll();
                 } catch (error) {
                     console.error('Error loading students from API:', error);
                     $('#studentsTableBody').html('<tr><td colspan="7" class="text-center text-danger">Error loading students. Please refresh the page.</td></tr>');
                     return;
                 }
                 
-                const students = studentsResponse.success && studentsResponse.data ? 
+                // Get all users first
+                const allUsers = studentsResponse.success && studentsResponse.data ? 
                                (studentsResponse.data.users || studentsResponse.data || []) : [];
+                
+                // Filter to only show users with 'student' role
+                const students = allUsers.filter(user => {
+                    if (user.roles && Array.isArray(user.roles)) {
+                        return user.roles.some(role => {
+                            const roleName = (role.name || role).toLowerCase();
+                            return roleName === 'student';
+                        });
+                    }
+                    return false;
+                });
                 
                 // Load all enrollments with error handling
                 let enrollmentsResponse;

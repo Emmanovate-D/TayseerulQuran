@@ -1,4 +1,4 @@
-const { User, Role, UserRole } = require('../models');
+const { User, Role, UserRole, Student } = require('../models');
 const { generateToken } = require('../config/jwt');
 const { sendSuccess, sendError, sendUnauthorized } = require('../utils/responseHandler');
 const { HTTP_STATUS, ROLES } = require('../utils/constants');
@@ -40,6 +40,21 @@ const register = async (req, res) => {
         userId: user.id,
         roleId: studentRole.id
       });
+      
+      // Automatically create Student profile if student role was assigned
+      try {
+        const existingStudent = await Student.findOne({ where: { userId: user.id } });
+        if (!existingStudent) {
+          await Student.create({
+            userId: user.id,
+            enrollmentDate: new Date(),
+            isActive: true
+          });
+        }
+      } catch (studentError) {
+        console.error('Error creating student profile:', studentError);
+        // Don't fail registration if Student creation fails
+      }
     }
 
     // Generate token
