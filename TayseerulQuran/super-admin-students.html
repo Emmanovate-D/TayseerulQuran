@@ -289,6 +289,84 @@
             }
         }
         
+        // Force delete student - removes all related records first
+        async function forceDeleteStudent(id) {
+            try {
+                if (typeof API === 'undefined') {
+                    showMessage('API not loaded. Please refresh the page.', 'error');
+                    return false;
+                }
+                
+                const cleanupSteps = [];
+                
+                // Step 1: Check and delete tutor profile
+                try {
+                    const tutorsResponse = await API.tutor.getAll();
+                    if (tutorsResponse.success && tutorsResponse.data) {
+                        const tutors = tutorsResponse.data.tutors || tutorsResponse.data || [];
+                        const tutorProfile = tutors.find(t => t.userId === id || (t.user && t.user.id === id));
+                        if (tutorProfile) {
+                            cleanupSteps.push('tutor profile');
+                            const deleteTutorResponse = await API.tutor.delete(tutorProfile.id);
+                            if (!deleteTutorResponse.success) {
+                                console.warn('Failed to delete tutor profile:', deleteTutorResponse.message);
+                            }
+                        }
+                    }
+                } catch (e) {
+                    console.warn('Error checking/deleting tutor profile:', e);
+                }
+                
+                // Step 2: Check and delete blog posts
+                try {
+                    const blogResponse = await API.blog.getAll({ authorId: id, limit: 1000 });
+                    if (blogResponse.success && blogResponse.data) {
+                        const posts = blogResponse.data.posts || blogResponse.data || [];
+                        if (posts.length > 0) {
+                            cleanupSteps.push(`${posts.length} blog post(s)`);
+                            for (const post of posts) {
+                                try {
+                                    await API.blog.delete(post.id);
+                                } catch (e) {
+                                    console.warn('Failed to delete blog post:', post.id, e);
+                                }
+                            }
+                        }
+                    }
+                } catch (e) {
+                    console.warn('Error checking/deleting blog posts:', e);
+                }
+                
+                // Step 3: Check and cancel enrollments
+                try {
+                    const enrollmentsResponse = await API.enrollment.getAll({ userId: id, limit: 10000 });
+                    if (enrollmentsResponse.success && enrollmentsResponse.data) {
+                        const enrollments = enrollmentsResponse.data.enrollments || enrollmentsResponse.data || [];
+                        if (enrollments.length > 0) {
+                            cleanupSteps.push(`${enrollments.length} enrollment(s)`);
+                            for (const enrollment of enrollments) {
+                                try {
+                                    await API.enrollment.cancel(enrollment.id);
+                                } catch (e) {
+                                    console.warn('Failed to cancel enrollment:', enrollment.id, e);
+                                }
+                            }
+                        }
+                    }
+                } catch (e) {
+                    console.warn('Error checking/canceling enrollments:', e);
+                }
+                
+                // Step 4: Now delete the student
+                const response = await API.user.delete(id);
+                return response && response.success;
+                
+            } catch (error) {
+                console.error('Error in force delete:', error);
+                return false;
+            }
+        }
+        
         // Delete student
         async function deleteStudent(id) {
             if (!confirm('Are you sure you want to delete this student? This action cannot be undone.')) {
@@ -340,20 +418,55 @@
                     
                     // Parse specific foreign key constraint errors to provide better error messages
                     let specificErrorMsg = '';
+                    let hasRelatedRecords = false;
+                    let relatedRecordTypes = [];
+                    
                     if (errorMsg.includes('foreign key') || errorMsg.includes('constraint') || errorMsg.includes('Cannot delete')) {
+                        hasRelatedRecords = true;
                         // Check for specific constraint types
                         if (errorMsg.includes('tutors') || errorMsg.includes('tutor')) {
-                            specificErrorMsg = 'Cannot delete this student because they have a tutor profile. Please remove the tutor profile first.';
+                            specificErrorMsg = 'Cannot delete this student because they have a tutor profile.';
+                            relatedRecordTypes.push('tutor profile');
                         } else if (errorMsg.includes('blog_posts') || errorMsg.includes('blog')) {
-                            specificErrorMsg = 'Cannot delete this student because they have blog posts. Please delete or reassign the blog posts first.';
+                            specificErrorMsg = 'Cannot delete this student because they have blog posts.';
+                            relatedRecordTypes.push('blog posts');
                         } else if (errorMsg.includes('enrollments') || errorMsg.includes('enrollment')) {
-                            specificErrorMsg = 'Cannot delete this student because they have active enrollments. Please cancel all enrollments first.';
+                            specificErrorMsg = 'Cannot delete this student because they have active enrollments.';
+                            relatedRecordTypes.push('enrollments');
                         } else if (errorMsg.includes('payments') || errorMsg.includes('payment')) {
-                            specificErrorMsg = 'Cannot delete this student because they have payment records. Please contact an administrator.';
+                            specificErrorMsg = 'Cannot delete this student because they have payment records.';
+                            relatedRecordTypes.push('payments');
                         } else {
-                            specificErrorMsg = 'Cannot delete this student because they have related records. Please remove related records first or contact an administrator.';
+                            specificErrorMsg = 'Cannot delete this student because they have related records.';
+                            relatedRecordTypes.push('related records');
                         }
-                        showMessage(specificErrorMsg, 'error');
+                        
+                        // Offer force delete option
+                        const forceDeleteMsg = specificErrorMsg + '\n\nWould you like to automatically remove all related records and delete the student?';
+                        if (confirm(forceDeleteMsg)) {
+                            showMessage('Removing related records and deleting student...', 'info');
+                            const forceDeleteSuccess = await forceDeleteStudent(id);
+                            
+                            if (forceDeleteSuccess) {
+                                showMessage('Student and all related records deleted successfully!', 'success');
+                                
+                                // Remove row from table
+                                const $row = $(`#studentsTableBody tr[data-student-id="${id}"]`);
+                                if ($row.length > 0) {
+                                    $row.remove();
+                                    const remainingRows = $('#studentsTableBody tr').length;
+                                    if (remainingRows === 0) {
+                                        loadStudents();
+                                    }
+                                } else {
+                                    loadStudents();
+                                }
+                            } else {
+                                showMessage('Failed to delete student. Some related records could not be removed.', 'error');
+                            }
+                        } else {
+                            showMessage(specificErrorMsg + ' Please remove related records first or use force delete.', 'error');
+                        }
                     } else {
                         showMessage(errorMsg, 'error');
                     }
@@ -367,17 +480,43 @@
                 if (errorMsg.includes('foreign key') || errorMsg.includes('constraint') || errorMsg.includes('Cannot delete')) {
                     // Check for specific constraint types
                     if (errorMsg.includes('tutors') || errorMsg.includes('tutor')) {
-                        specificErrorMsg = 'Cannot delete this student because they have a tutor profile. Please remove the tutor profile first.';
+                        specificErrorMsg = 'Cannot delete this student because they have a tutor profile.';
                     } else if (errorMsg.includes('blog_posts') || errorMsg.includes('blog')) {
-                        specificErrorMsg = 'Cannot delete this student because they have blog posts. Please delete or reassign the blog posts first.';
+                        specificErrorMsg = 'Cannot delete this student because they have blog posts.';
                     } else if (errorMsg.includes('enrollments') || errorMsg.includes('enrollment')) {
-                        specificErrorMsg = 'Cannot delete this student because they have active enrollments. Please cancel all enrollments first.';
+                        specificErrorMsg = 'Cannot delete this student because they have active enrollments.';
                     } else if (errorMsg.includes('payments') || errorMsg.includes('payment')) {
-                        specificErrorMsg = 'Cannot delete this student because they have payment records. Please contact an administrator.';
+                        specificErrorMsg = 'Cannot delete this student because they have payment records.';
                     } else {
-                        specificErrorMsg = 'Cannot delete this student because they have related records. Please remove related records first or contact an administrator.';
+                        specificErrorMsg = 'Cannot delete this student because they have related records.';
                     }
-                    showMessage(specificErrorMsg, 'error');
+                    
+                    // Offer force delete option
+                    const forceDeleteMsg = specificErrorMsg + '\n\nWould you like to automatically remove all related records and delete the student?';
+                    if (confirm(forceDeleteMsg)) {
+                        showMessage('Removing related records and deleting student...', 'info');
+                        const forceDeleteSuccess = await forceDeleteStudent(id);
+                        
+                        if (forceDeleteSuccess) {
+                            showMessage('Student and all related records deleted successfully!', 'success');
+                            
+                            // Remove row from table
+                            const $row = $(`#studentsTableBody tr[data-student-id="${id}"]`);
+                            if ($row.length > 0) {
+                                $row.remove();
+                                const remainingRows = $('#studentsTableBody tr').length;
+                                if (remainingRows === 0) {
+                                    loadStudents();
+                                }
+                            } else {
+                                loadStudents();
+                            }
+                        } else {
+                            showMessage('Failed to delete student. Some related records could not be removed.', 'error');
+                        }
+                    } else {
+                        showMessage(specificErrorMsg + ' Please remove related records first or use force delete.', 'error');
+                    }
                 } else {
                     showMessage(errorMsg, 'error');
                 }
