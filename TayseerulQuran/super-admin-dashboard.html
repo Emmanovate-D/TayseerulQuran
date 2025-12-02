@@ -110,9 +110,6 @@
                 </div>
 
                 <div class="login-header-action ml-auto d-flex align-items-center gap-3">
-                    <button class="btn btn-sm btn-outline-danger px-3 py-2" onclick="handleLogout()" style="font-size: 0.75rem;">
-                        <i class="icofont-logout me-1"></i> Logout
-                    </button>
                     <div class="dropdown">
                         <button class="action notification" data-bs-toggle="dropdown">
                             <i class="flaticon-notification"></i>
@@ -159,6 +156,9 @@
                             <li><a href="#" onclick="handleLogout(); return false;"><i class="icofont-logout"></i> Sign Out</a></li>
                         </ul>
                     </div>
+                    <button class="btn btn-sm px-3 py-2" onclick="handleLogout()" style="font-size: 0.75rem; background-color: #dc3545; color: #fff; border: none;">
+                        <i class="icofont-logout me-1"></i> Logout
+                    </button>
                 </div>
             </div>
         </div>
