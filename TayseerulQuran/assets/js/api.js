@@ -387,6 +387,12 @@ const paymentAPI = {
     });
   },
   
+  delete: async (id) => {
+    return await apiRequest(`/payments/${id}`, {
+      method: 'DELETE',
+    });
+  },
+  
   getUserPayments: async (userId) => {
     return await apiRequest(`/payments/user/${userId}`, { method: 'GET' });
   },

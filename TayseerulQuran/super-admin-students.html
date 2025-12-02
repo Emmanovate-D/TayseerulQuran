@@ -421,7 +421,40 @@
                     console.error('Error checking/deleting blog posts:', e);
                 }
                 
-                // Step 3: Check and cancel enrollments (try both userId and studentId)
+                // Step 3: Check and delete payments
+                try {
+                    const paymentsResponse = await API.payment.getAll({ userId: id, limit: 10000 });
+                    let payments = [];
+                    
+                    if (paymentsResponse.success && paymentsResponse.data) {
+                        payments = paymentsResponse.data.payments || paymentsResponse.data || [];
+                    }
+                    
+                    if (payments.length > 0) {
+                        console.log(`Found ${payments.length} payment(s), deleting...`);
+                        cleanupSteps.push(`${payments.length} payment(s)`);
+                        for (const payment of payments) {
+                            try {
+                                const deleteResponse = await API.payment.delete(payment.id);
+                                if (!deleteResponse || !deleteResponse.success) {
+                                    errors.push(`Payment ${payment.id}: ${deleteResponse?.message || 'Delete failed'}`);
+                                    console.warn('Failed to delete payment:', payment.id, deleteResponse?.message);
+                                } else {
+                                    console.log('Payment deleted:', payment.id);
+                                }
+                            } catch (e) {
+                                errors.push(`Payment ${payment.id}: ${e.message || 'Delete failed'}`);
+                                console.warn('Failed to delete payment:', payment.id, e);
+                            }
+                        }
+                    }
+                } catch (e) {
+                    const errorMsg = e.message || 'Unknown error';
+                    errors.push(`Payments: ${errorMsg}`);
+                    console.error('Error checking/deleting payments:', e);
+                }
+                
+                // Step 4: Check and cancel enrollments (try both userId and studentId)
                 try {
                     // Try with userId first
                     let enrollmentsResponse = await API.enrollment.getAll({ userId: id, limit: 10000 });
@@ -475,7 +508,7 @@
                     console.error('Error checking/canceling enrollments:', e);
                 }
                 
-                // Step 4: Check and delete student profile if exists
+                // Step 5: Check and delete student profile if exists
                 try {
                     if (API.student && API.student.getAll) {
                         const studentsResponse = await API.student.getAll();
@@ -492,7 +525,7 @@
                     console.warn('Error checking student profile:', e);
                 }
                 
-                // Step 5: Now delete the student
+                // Step 6: Now delete the student
                 console.log('Attempting to delete user...');
                 const response = await API.user.delete(id);
                 

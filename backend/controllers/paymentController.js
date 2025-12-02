@@ -176,6 +176,26 @@ const updatePayment = async (req, res) => {
 };
 
 /**
+ * Delete payment
+ */
+const deletePayment = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const payment = await Payment.findByPk(id);
+    if (!payment) {
+      return sendNotFound(res, 'Payment not found');
+    }
+
+    await payment.destroy();
+
+    return sendSuccess(res, null, 'Payment deleted successfully');
+  } catch (error) {
+    return sendError(res, error.message, HTTP_STATUS.INTERNAL_SERVER_ERROR);
+  }
+};
+
+/**
  * Get user's payment history
  */
 const getUserPayments = async (req, res) => {
@@ -567,6 +587,7 @@ const processRefund = async (req, res) => {
 };
 
 module.exports = {
+  deletePayment,
   getAllPayments,
   getPaymentById,
   createPayment,

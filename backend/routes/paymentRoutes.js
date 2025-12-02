@@ -25,6 +25,7 @@ router.post('/', requirePermission(PERMISSIONS.PROCESS_PAYMENT), validate(create
 router.get('/:id', requirePermission(PERMISSIONS.VIEW_PAYMENT), paymentController.getPaymentById);
 router.get('/:id/receipt', paymentController.getReceipt);
 router.put('/:id', requirePermission(PERMISSIONS.PROCESS_PAYMENT), validate(updatePaymentSchema), paymentController.updatePayment);
+router.delete('/:id', requirePermission(PERMISSIONS.PROCESS_PAYMENT), paymentController.deletePayment);
 router.post('/:id/refund', requirePermission(PERMISSIONS.PROCESS_PAYMENT), paymentController.processRefund);
 
 module.exports = router;
