@@ -17,7 +17,7 @@ const RoleAccessControl = {
         // Student Management
         'view_students': 'View Students List',
         'view_student_profile': 'View Student Profile',
-        'assign_students_to_teachers': 'Assign Students to Teachers',
+        'assign_students_to_tutors': 'Assign Students to Tutors',
         'edit_student': 'Edit Student Information',
         'delete_student': 'Delete Student',
         
@@ -63,7 +63,7 @@ const RoleAccessControl = {
     rolePermissions: {
         'super_admin': [
             'add_course', 'edit_course', 'delete_course', 'view_courses',
-            'view_students', 'view_student_profile', 'assign_students_to_teachers', 'edit_student', 'delete_student',
+            'view_students', 'view_student_profile', 'assign_students_to_tutors', 'edit_student', 'delete_student',
             'view_tutors', 'approve_tutor', 'reject_tutor', 'view_tutor_profile', 'edit_tutor', 'delete_tutor',
             'view_payments', 'export_payments', 'refund_payment',
             'view_admins', 'create_admin', 'edit_admin', 'set_admin_roles', 'assign_permissions', 'delete_admin',

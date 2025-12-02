@@ -138,12 +138,12 @@
                         <div class="admin-top-bar flex-wrap mb-4">
                             <div>
                                 <h3 class="title mb-2">Student Management</h3>
-                                <p class="text-muted">View student profiles and assign them to teachers</p>
+                                <p class="text-muted">View student profiles and assign them to tutors</p>
                             </div>
                             <div class="d-flex gap-2">
                                 <input type="text" class="form-control" placeholder="Search students..." style="max-width: 300px;">
-                                <button class="btn btn-sm btn-primary px-3 py-2 small" data-permission="assign_students_to_teachers" data-bs-toggle="modal" data-bs-target="#assignTeacherModal" style="font-size: 0.75rem;">
-                                    <i class="icofont-user me-1"></i> Assign to Teacher
+                                <button class="btn btn-sm btn-primary px-3 py-2 small" data-permission="assign_students_to_tutors" data-bs-toggle="modal" data-bs-target="#assignTutorModal" style="font-size: 0.75rem;">
+                                    <i class="icofont-user me-1"></i> Assign to Tutor
                                 </button>
                             </div>
                         </div>
@@ -159,7 +159,7 @@
                                                 <th>Name</th>
                                                 <th>Email</th>
                                                 <th>Enrolled Courses</th>
-                                                <th>Assigned Teacher</th>
+                                                <th>Assigned Tutor</th>
                                                 <th>Join Date</th>
                                                 <th>Actions</th>
                                             </tr>
@@ -224,35 +224,35 @@
             </div>
         </div>
 
-        <!-- Assign Teacher Modal -->
-        <div class="modal fade" id="assignTeacherModal" tabindex="-1">
+        <!-- Assign Tutor Modal -->
+        <div class="modal fade" id="assignTutorModal" tabindex="-1">
             <div class="modal-dialog modal-lg">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title">Assign Teacher to Students</h5>
+                        <h5 class="modal-title">Assign Tutor to Students</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
                     <div class="modal-body">
                         <form>
                             <div class="mb-3">
                                 <label class="form-label">Select Students</label>
-                                <select class="form-control" multiple size="8" id="assignTeacherStudents">
+                                <select class="form-control" multiple size="8" id="assignTutorStudents">
                                     <option value="">Loading students...</option>
                                 </select>
                                 <small class="text-muted">Hold Ctrl/Cmd to select multiple students</small>
                             </div>
                             <div class="mb-3">
-                                <label class="form-label">Select Teacher</label>
-                                <select class="form-control" id="assignTeacherTutor">
-                                    <option value="">Loading teachers...</option>
+                                <label class="form-label">Select Tutor</label>
+                                <option value="">Loading tutors...</option>
                                 </select>
                             </div>
                         </form>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-sm btn-secondary px-3 py-2 small" data-bs-dismiss="modal" style="font-size: 0.75rem;">Cancel</button>
-                        <button type="button" class="btn btn-sm btn-primary px-3 py-2 small" onclick="assignTeacher()" style="font-size: 0.75rem;">Assign Teacher</button>
-                    </div>
+                        <button type="button" class="btn btn-sm btn-primary px-3 py-2 small" onclick="assignTutor()" style="font-size: 0.75rem;">Assign Tutor</button>
+                    </div><select class="form-control" id="assignTutorTutor">
+                                    
                 </div>
             </div>
         </div>
@@ -690,8 +690,8 @@
             }
         }
         
-        // Load students and teachers for assignment modal
-        async function loadAssignTeacherModal() {
+        // Load students and tutors for assignment modal
+        async function loadAssignTutorModal() {
             try {
                 if (typeof API === 'undefined') {
                     showMessage('API not loaded. Please refresh the page.', 'error');
@@ -703,7 +703,7 @@
                 const students = studentsResponse.success && studentsResponse.data ? 
                                (studentsResponse.data.users || studentsResponse.data || []) : [];
                 
-                // Load all tutors (teachers)
+                // Load all tutors
                 const tutorsResponse = await API.tutor.getAll();
                 const tutors = tutorsResponse.success && tutorsResponse.data ? 
                               (tutorsResponse.data.tutors || tutorsResponse.data || []) : [];
@@ -726,27 +726,27 @@
                 });
                 
                 // Populate students dropdown
-                const studentsSelect = $('#assignTeacherModal select[multiple]');
+                const studentsSelect = $('#assignTutorModal select[multiple]');
                 studentsSelect.empty();
                 students.forEach(student => {
                     const fullName = `${student.firstName || ''} ${student.lastName || ''}`.trim() || student.email;
                     studentsSelect.append(`<option value="${student.id}">${fullName} (${student.email})</option>`);
                 });
                 
-                // Populate teachers dropdown - only show approved tutors
-                const teachersSelect = $('#assignTeacherModal select:not([multiple])');
-                teachersSelect.empty();
-                teachersSelect.append('<option value="">Select Teacher</option>');
+                // Populate tutors dropdown - only show approved tutors
+                const tutorsSelect = $('#assignTutorModal select:not([multiple])');
+                tutorsSelect.empty();
+                tutorsSelect.append('<option value="">Select Tutor</option>');
                 
                 if (approvedTutors.length === 0) {
-                    teachersSelect.append('<option value="" disabled>No approved teachers available. Please approve tutors first.</option>');
+                    tutorsSelect.append('<option value="" disabled>No approved tutors available. Please approve tutors first.</option>');
                 } else {
                     approvedTutors.forEach(tutor => {
                         if (tutor.user) {
                             const fullName = `${tutor.user.firstName || ''} ${tutor.user.lastName || ''}`.trim();
                             const email = tutor.user.email || '';
                             if (fullName) {
-                                teachersSelect.append(`<option value="${tutor.id}" data-user-id="${tutor.userId || tutor.user.id}">${fullName}${email ? ' (' + email + ')' : ''}</option>`);
+                                tutorsSelect.append(`<option value="${tutor.id}" data-user-id="${tutor.userId || tutor.user.id}">${fullName}${email ? ' (' + email + ')' : ''}</option>`);
                             }
                         }
                     });
@@ -754,13 +754,13 @@
                 
                 console.log(`Loaded ${approvedTutors.length} approved tutor(s) for assignment`);
             } catch (error) {
-                console.error('Error loading assign teacher modal:', error);
-                showMessage('Failed to load students and teachers. Please refresh the page.', 'error');
+                console.error('Error loading assign tutor modal:', error);
+                showMessage('Failed to load students and tutors. Please refresh the page.', 'error');
             }
         }
         
-        // Assign teacher
-        async function assignTeacher() {
+        // Assign tutor
+        async function assignTutor() {
             try {
                 if (typeof API === 'undefined') {
                     showMessage('API not loaded. Please refresh the page.', 'error');
@@ -768,14 +768,14 @@
                 }
                 
                 const selectedStudents = [];
-                $('#assignTeacherModal select[multiple] option:selected').each(function() {
+                $('#assignTutorModal select[multiple] option:selected').each(function() {
                     const studentId = $(this).val();
                     if (studentId) {
                         selectedStudents.push(parseInt(studentId));
                     }
                 });
                 
-                const tutorOption = $('#assignTeacherModal select:not([multiple]) option:selected');
+                const tutorOption = $('#assignTutorModal select:not([multiple]) option:selected');
                 const tutorId = tutorOption.val();
                 
                 if (selectedStudents.length === 0) {
@@ -784,7 +784,7 @@
                 }
                 
                 if (!tutorId) {
-                    showMessage('Please select a teacher', 'error');
+                    showMessage('Please select a tutor', 'error');
                     return;
                 }
                 
@@ -870,26 +870,26 @@
                 
                 // Show result message
                 if (successCount > 0) {
-                    const message = `Successfully assigned teacher to ${successCount} student(s)${errorCount > 0 ? `. ${errorCount} failed.` : ''}`;
+                    const message = `Successfully assigned tutor to ${successCount} student(s)${errorCount > 0 ? `. ${errorCount} failed.` : ''}`;
                     showMessage(message, errorCount === 0 ? 'success' : 'warning');
                     
                     if (errors.length > 0 && errors.length <= 3) {
                         console.warn('Assignment errors:', errors);
                     }
                     
-            $('#assignTeacherModal').modal('hide');
+            $('#assignTutorModal').modal('hide');
                     // Reset form
-                    $('#assignTeacherModal select[multiple]').val([]);
-                    $('#assignTeacherModal select:not([multiple])').val('');
+                    $('#assignTutorModal select[multiple]').val([]);
+                    $('#assignTutorModal select:not([multiple])').val('');
                     // Reload students to show updated assignments
                     await loadStudents();
                 } else {
-                    const errorMsg = `Failed to assign teacher to all students. ${errors.length > 0 ? errors.slice(0, 3).join('; ') : 'Please try again.'}`;
+                    const errorMsg = `Failed to assign tutor to all students. ${errors.length > 0 ? errors.slice(0, 3).join('; ') : 'Please try again.'}`;
                     showMessage(errorMsg, 'error');
                 }
             } catch (error) {
-                console.error('Error assigning teacher:', error);
-                showMessage('Failed to assign teacher. Please try again.', 'error');
+                console.error('Error assigning tutor:', error);
+                showMessage('Failed to assign tutor. Please try again.', 'error');
             }
         }
         
@@ -911,7 +911,7 @@
                 const email = $('#editStudentEmail').val() ? $('#editStudentEmail').val().trim() : '';
                 const phoneInput = $('#editStudentPhone');
                 const phone = phoneInput.length > 0 && phoneInput.val() ? phoneInput.val().trim() : '';
-                const teacherId = $('#editStudentTeacher').val();
+                const tutorId = $('#editStudentTutor').val();
                 
                 if (!fullName || !email) {
                     showMessage('Please fill in all required fields', 'error');
@@ -993,8 +993,8 @@
                         console.warn('Error loading enrollments:', e);
                     }
                     
-                    // Get assigned teacher
-                    let assignedTeacherName = 'Not Assigned';
+                    // Get assigned tutor
+                    let assignedTutorName = 'Not Assigned';
                     try {
                         const studentsWithProfilesResponse = await API.student.getAll({ limit: 10000 });
                         if (studentsWithProfilesResponse.success && studentsWithProfilesResponse.data) {
@@ -1006,13 +1006,13 @@
                                 if (tutorResponse.success && tutorResponse.data && tutorResponse.data.tutor) {
                                     const tutor = tutorResponse.data.tutor;
                                     if (tutor.user) {
-                                        assignedTeacherName = `${tutor.user.firstName || ''} ${tutor.user.lastName || ''}`.trim() || 'Assigned';
+                                        assignedTutorName = `${tutor.user.firstName || ''} ${tutor.user.lastName || ''}`.trim() || 'Assigned';
                                     }
                                 }
                             }
                         }
                     } catch (e) {
-                        console.warn('Error loading assigned teacher:', e);
+                        console.warn('Error loading assigned tutor:', e);
                     }
                     
                     // Update modal content
@@ -1039,8 +1039,8 @@
                                         <td>${enrolledCount}</td>
                                     </tr>
                                     <tr>
-                                        <th>Assigned Teacher:</th>
-                                        <td>${assignedTeacherName}</td>
+                                        <th>Assigned Tutor:</th>
+                                        <td>${assignedTutorName}</td>
                                     </tr>
                                     <tr>
                                         <th>Join Date:</th>
@@ -1219,9 +1219,9 @@
                     // Use only author-01.jpg as fallback to avoid 404 errors
                     const profileImage = student.profileImage || 'assets/images/author/author-01.jpg';
                     
-                    // Get assigned teacher (if any) from the maps we created
+                    // Get assigned tutor (if any) from the maps we created
                     const tutorId = tutorAssignmentMap[studentId];
-                    const assignedTeacher = tutorId && tutorNameMap[tutorId] ? tutorNameMap[tutorId] : 'Not Assigned';
+                    const assignedTutor = tutorId && tutorNameMap[tutorId] ? tutorNameMap[tutorId] : 'Not Assigned';
                     
                     html += `
                         <tr data-student-id="${studentId}">
@@ -1240,7 +1240,7 @@
                                 <span class="badge bg-primary">${enrolledCount}</span>
                                 ${completedEnrollments.length > 0 ? `<br><small class="text-success">${completedEnrollments.length} completed</small>` : ''}
                             </td>
-                            <td>${assignedTeacher}</td>
+                            <td>${assignedTutor}</td>
                             <td>${joinDate}</td>
                             <td>
                                 <button class="btn btn-sm btn-info px-2 py-1" onclick="viewStudent(${studentId})" data-student-id="${studentId}" data-permission="view_student_profile" style="font-size: 0.7rem;">
@@ -1303,9 +1303,9 @@
             // Set active menu item
             setActiveMenuItem();
             
-            // Load assign teacher modal when it opens
-            $('#assignTeacherModal').on('show.bs.modal', function() {
-                loadAssignTeacherModal();
+            // Load assign tutor modal when it opens
+            $('#assignTutorModal').on('show.bs.modal', function() {
+                loadAssignTutorModal();
             });
             
             // Remove old event handlers and add new ones
