@@ -543,8 +543,9 @@
                         return;
                     }
 
-                    // Load enrollments to get student counts per course
+                    // Load enrollments to get detailed statistics per course
                     let enrollmentMap = {};
+                    let enrollmentStatsMap = {};
                     try {
                         if (API.enrollment) {
                             const enrollmentsResponse = await API.enrollment.getAll({ limit: 10000 });
@@ -553,7 +554,30 @@
                                 enrollments.forEach(enrollment => {
                                     const courseId = enrollment.courseId || enrollment.Course?.id;
                                     if (courseId) {
+                                        // Total count
                                         enrollmentMap[courseId] = (enrollmentMap[courseId] || 0) + 1;
+                                        
+                                        // Detailed stats
+                                        if (!enrollmentStatsMap[courseId]) {
+                                            enrollmentStatsMap[courseId] = {
+                                                total: 0,
+                                                enrolled: 0,
+                                                in_progress: 0,
+                                                completed: 0,
+                                                dropped: 0
+                                            };
+                                        }
+                                        enrollmentStatsMap[courseId].total++;
+                                        const status = (enrollment.status || 'enrolled').toLowerCase();
+                                        if (status === 'enrolled') {
+                                            enrollmentStatsMap[courseId].enrolled++;
+                                        } else if (status === 'in_progress') {
+                                            enrollmentStatsMap[courseId].in_progress++;
+                                        } else if (status === 'completed') {
+                                            enrollmentStatsMap[courseId].completed++;
+                                        } else if (status === 'dropped') {
+                                            enrollmentStatsMap[courseId].dropped++;
+                                        }
                                     }
                                 });
                             }
@@ -568,7 +592,19 @@
                         const price = course.price ? '$' + parseFloat(course.price).toFixed(2) : 'Free';
                         const status = course.isPublished ? '<span class="badge bg-success">Published</span>' : '<span class="badge bg-warning">Draft</span>';
                         // Use enrollment count from enrollmentMap, fallback to course.enrollmentCount or 0
-                        const students = enrollmentMap[course.id] || course.enrollmentCount || 0;
+                        const totalStudents = enrollmentMap[course.id] || course.enrollmentCount || 0;
+                        const stats = enrollmentStatsMap[course.id] || { total: totalStudents, enrolled: 0, in_progress: 0, completed: 0, dropped: 0 };
+                        
+                        // Build enrollment stats tooltip/text
+                        let enrollmentStatsHtml = `<span class="badge bg-primary" title="Total: ${stats.total}">${totalStudents}</span>`;
+                        if (stats.completed > 0 || stats.dropped > 0 || stats.in_progress > 0) {
+                            enrollmentStatsHtml += `<br><small class="text-muted">`;
+                            const statsParts = [];
+                            if (stats.completed > 0) statsParts.push(`<span class="text-success">${stats.completed} completed</span>`);
+                            if (stats.in_progress > 0) statsParts.push(`<span class="text-info">${stats.in_progress} in progress</span>`);
+                            if (stats.dropped > 0) statsParts.push(`<span class="text-danger">${stats.dropped} dropped</span>`);
+                            enrollmentStatsHtml += statsParts.join(' | ') + '</small>';
+                        }
 
                         html += `
                             <tr data-course-id="${course.id}">
@@ -577,7 +613,7 @@
                                 <td>${instructor}</td>
                                 <td>${course.category || 'General'}</td>
                                 <td>${price}</td>
-                                <td>${students}</td>
+                                <td>${enrollmentStatsHtml}</td>
                                 <td>${status}</td>
                                 <td>
                                     <button class="btn btn-sm btn-info px-2 py-1" onclick="openEditCourseModal(${course.id})" data-course-id="${course.id}" style="font-size: 0.7rem;">

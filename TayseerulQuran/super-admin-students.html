@@ -257,6 +257,24 @@
             </div>
         </div>
 
+        <!-- View Student Modal -->
+        <div class="modal fade" id="viewStudentModal" tabindex="-1">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Student Details</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <!-- Content will be loaded dynamically -->
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-sm btn-secondary px-3 py-2 small" data-bs-dismiss="modal" style="font-size: 0.75rem;">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <a href="#" class="back-to-top">
             <i class="icofont-simple-up"></i>
         </a>
@@ -969,16 +987,46 @@
                     const joinDate = student.createdAt ? new Date(student.createdAt).toLocaleDateString() : 'N/A';
                     const status = student.isActive ? '<span class="badge bg-success">Active</span>' : '<span class="badge bg-secondary">Inactive</span>';
                     
-                    // Get enrollment count
+                    // Get enrollments with course details
+                    let studentEnrollments = [];
                     let enrolledCount = 0;
                     try {
                         const enrollmentsResponse = await API.enrollment.getAll({ limit: 10000 });
                         if (enrollmentsResponse.success && enrollmentsResponse.data) {
-                            const enrollments = enrollmentsResponse.data.enrollments || [];
-                            enrolledCount = enrollments.filter(e => (e.studentId || e.User?.id) === studentId).length;
+                            const allEnrollments = enrollmentsResponse.data.enrollments || [];
+                            studentEnrollments = allEnrollments.filter(e => (e.studentId || e.User?.id) === studentId);
+                            enrolledCount = studentEnrollments.length;
                         }
                     } catch (e) {
                         console.warn('Error loading enrollments:', e);
+                    }
+                    
+                    // Build enrolled courses list HTML
+                    let enrolledCoursesHtml = '';
+                    if (studentEnrollments.length > 0) {
+                        enrolledCoursesHtml = '<div class="mt-2"><strong>Enrolled Courses:</strong><ul class="list-group mt-2">';
+                        studentEnrollments.forEach(enrollment => {
+                            const course = enrollment.course || enrollment.Course;
+                            const courseName = course ? course.title : 'Unknown Course';
+                            const courseId = course ? course.id : 'N/A';
+                            const enrollmentDate = enrollment.enrollmentDate ? new Date(enrollment.enrollmentDate).toLocaleDateString() : 'N/A';
+                            const status = enrollment.status || 'enrolled';
+                            const statusClass = status === 'completed' ? 'success' : status === 'dropped' ? 'danger' : 'primary';
+                            const progress = enrollment.progress || 0;
+                            
+                            enrolledCoursesHtml += `
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <strong>${courseName}</strong>
+                                        <br><small class="text-muted">Enrolled: ${enrollmentDate} | Progress: ${progress}%</small>
+                                    </div>
+                                    <span class="badge bg-${statusClass}">${status.charAt(0).toUpperCase() + status.slice(1)}</span>
+                                </li>
+                            `;
+                        });
+                        enrolledCoursesHtml += '</ul></div>';
+                    } else {
+                        enrolledCoursesHtml = '<p class="text-muted mt-2">No enrolled courses yet.</p>';
                     }
                     
                     // Get assigned tutor
@@ -1024,7 +1072,10 @@
                                     </tr>
                                     <tr>
                                         <th>Enrolled Courses:</th>
-                                        <td>${enrolledCount}</td>
+                                        <td>
+                                            <span class="badge bg-primary">${enrolledCount}</span>
+                                            ${enrolledCoursesHtml}
+                                        </td>
                                     </tr>
                                     <tr>
                                         <th>Assigned Tutor:</th>

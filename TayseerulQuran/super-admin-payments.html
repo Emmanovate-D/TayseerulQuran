@@ -807,6 +807,8 @@
                     const payment = response.data.payment || response.data;
                     const studentName = payment.user ? `${payment.user.firstName || ''} ${payment.user.lastName || ''}`.trim() : 'Unknown Student';
                     const courseName = payment.course ? payment.course.title : 'Unknown Course';
+                    const courseId = payment.courseId || (payment.course && payment.course.id);
+                    const userId = payment.userId || (payment.user && payment.user.id);
                     const amount = parseFloat(payment.amount || 0).toLocaleString('en-US', { style: 'currency', currency: 'USD' });
                     const date = payment.createdAt ? new Date(payment.createdAt).toLocaleString('en-US', {
                         year: 'numeric',
@@ -821,6 +823,30 @@
                     const statusText = payment.status ? payment.status.charAt(0).toUpperCase() + payment.status.slice(1) : 'Unknown';
                     const paymentMethod = payment.paymentMethod || payment.paymentMethodName || 'N/A';
                     const transactionId = payment.id ? `#TXN${String(payment.id).padStart(6, '0')}` : 'N/A';
+                    
+                    // Check enrollment status
+                    let enrollmentStatus = 'Not Found';
+                    let enrollmentId = null;
+                    try {
+                        if (API.enrollment && userId && courseId) {
+                            const enrollmentsResponse = await API.enrollment.getAll({ limit: 10000 });
+                            if (enrollmentsResponse.success && enrollmentsResponse.data) {
+                                const enrollments = enrollmentsResponse.data.enrollments || [];
+                                const enrollment = enrollments.find(e => 
+                                    (e.studentId === userId || e.User?.id === userId) && 
+                                    (e.courseId === courseId || e.Course?.id === courseId)
+                                );
+                                if (enrollment) {
+                                    enrollmentId = enrollment.id;
+                                    const status = enrollment.status || 'enrolled';
+                                    const statusClass = status === 'completed' ? 'success' : status === 'dropped' ? 'danger' : 'primary';
+                                    enrollmentStatus = `<span class="badge bg-${statusClass}">${status.charAt(0).toUpperCase() + status.slice(1)}</span>`;
+                                }
+                            }
+                        }
+                    } catch (e) {
+                        console.warn('Error checking enrollment:', e);
+                    }
                     
                     $('#viewPaymentModal .modal-body').html(`
                         <table class="table table-borderless">
@@ -849,8 +875,12 @@
                                 <td>${date}</td>
                             </tr>
                             <tr>
-                                <th>Status:</th>
+                                <th>Payment Status:</th>
                                 <td><span class="badge bg-${statusClass}">${statusText}</span></td>
+                            </tr>
+                            <tr>
+                                <th>Enrollment Status:</th>
+                                <td>${enrollmentStatus}${enrollmentId ? ` <small class="text-muted">(ID: ${enrollmentId})</small>` : ''}</td>
                             </tr>
                             ${payment.transactionId ? `
                             <tr>
