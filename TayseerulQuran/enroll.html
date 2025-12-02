@@ -307,8 +307,8 @@
                 // If course is free, enroll directly without payment
                 if (coursePrice === 0) {
                     try {
-                        // Enroll directly via enrollment API
-                        const enrollmentResponse = await API.enrollment.enroll(currentCourse.id);
+                        // Enroll directly via enrollment API (no paymentData needed for free courses)
+                        const enrollmentResponse = await API.enrollment.enroll(currentCourse.id, null);
                         
                         if (enrollmentResponse.success || enrollmentResponse.data) {
                             showMessage('Successfully enrolled in course!', 'success');
