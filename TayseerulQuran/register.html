@@ -760,19 +760,31 @@
                     }
                 }
                 
-                // Show success message
+                // Show success message with email verification notice
+                const successMessage = `
+                    <div style="padding: 15px;">
+                        <strong>Registration successful! 🎉</strong><br>
+                        <p style="margin: 10px 0 0 0; font-size: 14px;">
+                            We've sent a verification email to <strong>${email}</strong>. 
+                            Please check your inbox and click the verification link to activate your account.
+                        </p>
+                        <p style="margin: 10px 0 0 0; font-size: 13px; color: #666;">
+                            Didn't receive the email? <a href="verify-email.html?email=${encodeURIComponent(email)}" style="color: #007bff;">Resend verification</a>
+                        </p>
+                    </div>
+                `;
                 messageDiv.addClass('success')
                     .css('background-color', '#d4edda')
                     .css('color', '#155724')
                     .css('border', '1px solid #c3e6cb')
-                    .text('Registration successful! Redirecting...')
+                    .html(successMessage)
                     .show();
                 
-                // Redirect to courses page after successful registration
+                // Redirect to courses page after successful registration (with delay to show message)
                 console.log('Redirecting to courses.html');
                 setTimeout(() => {
                     window.location.href = 'courses.html';
-                }, 1500);
+                }, 5000);
                 
             } catch (error) {
                 console.error('Registration error:', error);

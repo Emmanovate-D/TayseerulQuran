@@ -8,6 +8,10 @@ const { registerSchema, loginSchema, changePasswordSchema } = require('../valida
 // Public routes
 router.post('/register', validate(registerSchema), authController.register);
 router.post('/login', validate(loginSchema), authController.login);
+router.post('/verify-email', authController.verifyEmail);
+router.post('/resend-verification', authController.resendVerificationEmail);
+router.post('/forgot-password', authController.requestPasswordReset);
+router.post('/reset-password', authController.resetPassword);
 
 // Protected routes
 router.get('/profile', authenticate, authController.getProfile);

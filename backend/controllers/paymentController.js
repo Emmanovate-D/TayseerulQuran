@@ -3,6 +3,7 @@ const { sendSuccess, sendError, sendNotFound } = require('../utils/responseHandl
 const { HTTP_STATUS } = require('../utils/constants');
 const { Op } = require('sequelize');
 const { PaymentGatewayFactory, processPaymentWithIdempotency } = require('../services/paymentGateway');
+const emailService = require('../services/emailService');
 const crypto = require('crypto');
 
 /**
@@ -306,6 +307,18 @@ const processPayment = async (req, res) => {
       ]
     });
 
+    // Send payment confirmation email if payment is completed (non-blocking)
+    if (gatewayResult.status === 'completed' && updatedPayment.user && updatedPayment.course) {
+      emailService.sendPaymentConfirmationEmail(
+        updatedPayment.user,
+        updatedPayment,
+        updatedPayment.course
+      ).catch(err => {
+        console.error('Error sending payment confirmation email:', err);
+        // Don't fail payment if email fails
+      });
+    }
+
     return sendSuccess(res, {
       payment: updatedPayment,
       redirectUrl: gatewayResult.redirectUrl,
@@ -423,6 +436,19 @@ async function createEnrollmentAfterPayment(payment) {
     if (course) {
       course.enrollmentCount = (course.enrollmentCount || 0) + 1;
       await course.save();
+    }
+
+    // Get user for enrollment confirmation email
+    const user = await User.findByPk(payment.userId, {
+      attributes: ['id', 'firstName', 'lastName', 'email']
+    });
+
+    // Send enrollment confirmation email (non-blocking)
+    if (user && course) {
+      emailService.sendEnrollmentConfirmationEmail(user, enrollment, course).catch(err => {
+        console.error('Error sending enrollment confirmation email:', err);
+        // Don't fail enrollment if email fails
+      });
     }
 
     return enrollment;
