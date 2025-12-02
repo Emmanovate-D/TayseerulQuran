@@ -299,10 +299,13 @@
             try {
                 if (typeof API === 'undefined') {
                     showMessage('API not loaded. Please refresh the page.', 'error');
-                    return false;
+                    return { success: false, error: 'API not loaded' };
                 }
                 
                 const cleanupSteps = [];
+                const errors = [];
+                
+                console.log('Starting force delete for student ID:', id);
                 
                 // Step 1: Check and delete tutor profile
                 try {
@@ -311,64 +314,160 @@
                         const tutors = tutorsResponse.data.tutors || tutorsResponse.data || [];
                         const tutorProfile = tutors.find(t => t.userId === id || (t.user && t.user.id === id));
                         if (tutorProfile) {
+                            console.log('Found tutor profile, deleting...', tutorProfile.id);
                             cleanupSteps.push('tutor profile');
                             const deleteTutorResponse = await API.tutor.delete(tutorProfile.id);
-                            if (!deleteTutorResponse.success) {
-                                console.warn('Failed to delete tutor profile:', deleteTutorResponse.message);
+                            if (!deleteTutorResponse || !deleteTutorResponse.success) {
+                                const errorMsg = deleteTutorResponse?.message || 'Unknown error';
+                                errors.push(`Tutor profile: ${errorMsg}`);
+                                console.error('Failed to delete tutor profile:', errorMsg);
+                            } else {
+                                console.log('Tutor profile deleted successfully');
                             }
                         }
                     }
                 } catch (e) {
-                    console.warn('Error checking/deleting tutor profile:', e);
+                    const errorMsg = e.message || 'Unknown error';
+                    errors.push(`Tutor profile: ${errorMsg}`);
+                    console.error('Error checking/deleting tutor profile:', e);
                 }
                 
-                // Step 2: Check and delete blog posts
+                // Step 2: Check and delete blog posts (get all and filter by author)
                 try {
-                    const blogResponse = await API.blog.getAll({ authorId: id, limit: 1000 });
+                    const blogResponse = await API.blog.getAll();
                     if (blogResponse.success && blogResponse.data) {
-                        const posts = blogResponse.data.posts || blogResponse.data || [];
-                        if (posts.length > 0) {
-                            cleanupSteps.push(`${posts.length} blog post(s)`);
-                            for (const post of posts) {
+                        const allPosts = blogResponse.data.posts || blogResponse.data || [];
+                        // Filter posts by author ID
+                        const userPosts = allPosts.filter(post => {
+                            const authorId = post.authorId || (post.author && post.author.id) || (post.author && post.author.userId);
+                            return authorId === id;
+                        });
+                        
+                        if (userPosts.length > 0) {
+                            console.log(`Found ${userPosts.length} blog post(s), deleting...`);
+                            cleanupSteps.push(`${userPosts.length} blog post(s)`);
+                            for (const post of userPosts) {
                                 try {
-                                    await API.blog.delete(post.id);
+                                    const deleteResponse = await API.blog.delete(post.id);
+                                    if (!deleteResponse || !deleteResponse.success) {
+                                        errors.push(`Blog post ${post.id}: ${deleteResponse?.message || 'Delete failed'}`);
+                                        console.warn('Failed to delete blog post:', post.id, deleteResponse?.message);
+                                    } else {
+                                        console.log('Blog post deleted:', post.id);
+                                    }
                                 } catch (e) {
+                                    errors.push(`Blog post ${post.id}: ${e.message || 'Delete failed'}`);
                                     console.warn('Failed to delete blog post:', post.id, e);
                                 }
                             }
                         }
                     }
                 } catch (e) {
-                    console.warn('Error checking/deleting blog posts:', e);
+                    const errorMsg = e.message || 'Unknown error';
+                    errors.push(`Blog posts: ${errorMsg}`);
+                    console.error('Error checking/deleting blog posts:', e);
                 }
                 
-                // Step 3: Check and cancel enrollments
+                // Step 3: Check and cancel enrollments (try both userId and studentId)
                 try {
-                    const enrollmentsResponse = await API.enrollment.getAll({ userId: id, limit: 10000 });
+                    // Try with userId first
+                    let enrollmentsResponse = await API.enrollment.getAll({ userId: id, limit: 10000 });
+                    let enrollments = [];
+                    
                     if (enrollmentsResponse.success && enrollmentsResponse.data) {
-                        const enrollments = enrollmentsResponse.data.enrollments || enrollmentsResponse.data || [];
-                        if (enrollments.length > 0) {
-                            cleanupSteps.push(`${enrollments.length} enrollment(s)`);
-                            for (const enrollment of enrollments) {
-                                try {
-                                    await API.enrollment.cancel(enrollment.id);
-                                } catch (e) {
-                                    console.warn('Failed to cancel enrollment:', enrollment.id, e);
+                        enrollments = enrollmentsResponse.data.enrollments || enrollmentsResponse.data || [];
+                    }
+                    
+                    // Also try with studentId if no results
+                    if (enrollments.length === 0) {
+                        enrollmentsResponse = await API.enrollment.getAll({ studentId: id, limit: 10000 });
+                        if (enrollmentsResponse.success && enrollmentsResponse.data) {
+                            enrollments = enrollmentsResponse.data.enrollments || enrollmentsResponse.data || [];
+                        }
+                    }
+                    
+                    // Filter enrollments by student/user ID if still no results
+                    if (enrollments.length === 0) {
+                        const allEnrollmentsResponse = await API.enrollment.getAll({ limit: 10000 });
+                        if (allEnrollmentsResponse.success && allEnrollmentsResponse.data) {
+                            const allEnrollments = allEnrollmentsResponse.data.enrollments || allEnrollmentsResponse.data || [];
+                            enrollments = allEnrollments.filter(e => {
+                                const studentId = e.studentId || e.User?.id || (e.student && e.student.id);
+                                return studentId === id;
+                            });
+                        }
+                    }
+                    
+                    if (enrollments.length > 0) {
+                        console.log(`Found ${enrollments.length} enrollment(s), canceling...`);
+                        cleanupSteps.push(`${enrollments.length} enrollment(s)`);
+                        for (const enrollment of enrollments) {
+                            try {
+                                const cancelResponse = await API.enrollment.cancel(enrollment.id);
+                                if (!cancelResponse || !cancelResponse.success) {
+                                    errors.push(`Enrollment ${enrollment.id}: ${cancelResponse?.message || 'Cancel failed'}`);
+                                    console.warn('Failed to cancel enrollment:', enrollment.id, cancelResponse?.message);
+                                } else {
+                                    console.log('Enrollment canceled:', enrollment.id);
                                 }
+                            } catch (e) {
+                                errors.push(`Enrollment ${enrollment.id}: ${e.message || 'Cancel failed'}`);
+                                console.warn('Failed to cancel enrollment:', enrollment.id, e);
                             }
                         }
                     }
                 } catch (e) {
-                    console.warn('Error checking/canceling enrollments:', e);
+                    const errorMsg = e.message || 'Unknown error';
+                    errors.push(`Enrollments: ${errorMsg}`);
+                    console.error('Error checking/canceling enrollments:', e);
                 }
                 
-                // Step 4: Now delete the student
+                // Step 4: Check and delete student profile if exists
+                try {
+                    if (API.student && API.student.getAll) {
+                        const studentsResponse = await API.student.getAll();
+                        if (studentsResponse.success && studentsResponse.data) {
+                            const studentProfiles = studentsResponse.data.students || studentsResponse.data || [];
+                            const studentProfile = studentProfiles.find(sp => sp.userId === id);
+                            if (studentProfile && studentProfile.id) {
+                                console.log('Found student profile, will be deleted with user');
+                                // Student profile should be deleted automatically when user is deleted (CASCADE)
+                            }
+                        }
+                    }
+                } catch (e) {
+                    console.warn('Error checking student profile:', e);
+                }
+                
+                // Step 5: Now delete the student
+                console.log('Attempting to delete user...');
                 const response = await API.user.delete(id);
-                return response && response.success;
+                
+                if (response && response.success) {
+                    console.log('User deleted successfully');
+                    return { 
+                        success: true, 
+                        cleanupSteps: cleanupSteps,
+                        errors: errors.length > 0 ? errors : null
+                    };
+                } else {
+                    const errorMsg = response?.message || 'Unknown error';
+                    console.error('Failed to delete user:', errorMsg);
+                    return { 
+                        success: false, 
+                        error: errorMsg,
+                        cleanupSteps: cleanupSteps,
+                        errors: errors
+                    };
+                }
                 
             } catch (error) {
                 console.error('Error in force delete:', error);
-                return false;
+                return { 
+                    success: false, 
+                    error: error.message || 'Unknown error occurred',
+                    errors: []
+                };
             }
         }
         
@@ -450,10 +549,17 @@
                         const forceDeleteMsg = specificErrorMsg + '\n\nWould you like to automatically remove all related records and delete the student?';
                         if (confirm(forceDeleteMsg)) {
                             showMessage('Removing related records and deleting student...', 'info');
-                            const forceDeleteSuccess = await forceDeleteStudent(id);
+                            const forceDeleteResult = await forceDeleteStudent(id);
                             
-                            if (forceDeleteSuccess) {
-                                showMessage('Student and all related records deleted successfully!', 'success');
+                            if (forceDeleteResult && forceDeleteResult.success) {
+                                let successMsg = 'Student and all related records deleted successfully!';
+                                if (forceDeleteResult.cleanupSteps && forceDeleteResult.cleanupSteps.length > 0) {
+                                    successMsg += ` Removed: ${forceDeleteResult.cleanupSteps.join(', ')}.`;
+                                }
+                                if (forceDeleteResult.errors && forceDeleteResult.errors.length > 0) {
+                                    console.warn('Some cleanup errors (but deletion succeeded):', forceDeleteResult.errors);
+                                }
+                                showMessage(successMsg, 'success');
                                 
                                 // Remove row from table
                                 const $row = $(`#studentsTableBody tr[data-student-id="${id}"]`);
@@ -467,7 +573,13 @@
                                     loadStudents();
                                 }
                             } else {
-                                showMessage('Failed to delete student. Some related records could not be removed.', 'error');
+                                const errorDetails = forceDeleteResult?.error || 'Unknown error';
+                                let errorMsg = `Failed to delete student: ${errorDetails}`;
+                                if (forceDeleteResult?.errors && forceDeleteResult.errors.length > 0) {
+                                    errorMsg += ` Errors: ${forceDeleteResult.errors.slice(0, 3).join('; ')}`;
+                                }
+                                showMessage(errorMsg, 'error');
+                                console.error('Force delete failed:', forceDeleteResult);
                             }
                         } else {
                             showMessage(specificErrorMsg + ' Please remove related records first or use force delete.', 'error');
@@ -500,10 +612,17 @@
                     const forceDeleteMsg = specificErrorMsg + '\n\nWould you like to automatically remove all related records and delete the student?';
                     if (confirm(forceDeleteMsg)) {
                         showMessage('Removing related records and deleting student...', 'info');
-                        const forceDeleteSuccess = await forceDeleteStudent(id);
+                        const forceDeleteResult = await forceDeleteStudent(id);
                         
-                        if (forceDeleteSuccess) {
-                            showMessage('Student and all related records deleted successfully!', 'success');
+                        if (forceDeleteResult && forceDeleteResult.success) {
+                            let successMsg = 'Student and all related records deleted successfully!';
+                            if (forceDeleteResult.cleanupSteps && forceDeleteResult.cleanupSteps.length > 0) {
+                                successMsg += ` Removed: ${forceDeleteResult.cleanupSteps.join(', ')}.`;
+                            }
+                            if (forceDeleteResult.errors && forceDeleteResult.errors.length > 0) {
+                                console.warn('Some cleanup errors (but deletion succeeded):', forceDeleteResult.errors);
+                            }
+                            showMessage(successMsg, 'success');
                             
                             // Remove row from table
                             const $row = $(`#studentsTableBody tr[data-student-id="${id}"]`);
@@ -517,7 +636,13 @@
                                 loadStudents();
                             }
                         } else {
-                            showMessage('Failed to delete student. Some related records could not be removed.', 'error');
+                            const errorDetails = forceDeleteResult?.error || 'Unknown error';
+                            let errorMsg = `Failed to delete student: ${errorDetails}`;
+                            if (forceDeleteResult?.errors && forceDeleteResult.errors.length > 0) {
+                                errorMsg += ` Errors: ${forceDeleteResult.errors.slice(0, 3).join('; ')}`;
+                            }
+                            showMessage(errorMsg, 'error');
+                            console.error('Force delete failed:', forceDeleteResult);
                         }
                     } else {
                         showMessage(specificErrorMsg + ' Please remove related records first or use force delete.', 'error');
