@@ -145,34 +145,6 @@ const authAPI = {
     API_CONFIG.removeAuthToken();
     API_CONFIG.removeUser();
     window.location.href = 'login.html';
-  },
-  
-  verifyEmail: async (token) => {
-    return await apiRequest('/auth/verify-email', {
-      method: 'POST',
-      body: { token },
-    });
-  },
-  
-  resendVerification: async (email) => {
-    return await apiRequest('/auth/resend-verification', {
-      method: 'POST',
-      body: { email },
-    });
-  },
-  
-  forgotPassword: async (email) => {
-    return await apiRequest('/auth/forgot-password', {
-      method: 'POST',
-      body: { email },
-    });
-  },
-  
-  resetPassword: async (token, newPassword) => {
-    return await apiRequest('/auth/reset-password', {
-      method: 'POST',
-      body: { token, newPassword },
-    });
   }
 };
 

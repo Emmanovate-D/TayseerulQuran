@@ -2,7 +2,6 @@ const { StudentCourse, Course, User, Payment, Student } = require('../models');
 const { sendSuccess, sendError, sendNotFound } = require('../utils/responseHandler');
 const { HTTP_STATUS } = require('../utils/constants');
 const { Op } = require('sequelize');
-const emailService = require('../services/emailService');
 
 /**
  * Enroll user in a course
@@ -96,19 +95,6 @@ const enrollInCourse = async (req, res) => {
     // Link payment to enrollment if provided
     if (payment) {
       // Payment is already linked via courseId and userId
-    }
-
-    // Get user for email
-    const user = await User.findByPk(userId, {
-      attributes: ['id', 'firstName', 'lastName', 'email']
-    });
-
-    // Send enrollment confirmation email (non-blocking)
-    if (user) {
-      emailService.sendEnrollmentConfirmationEmail(user, enrollment, course).catch(err => {
-        console.error('Error sending enrollment confirmation email:', err);
-        // Don't fail enrollment if email fails
-      });
     }
 
     return sendSuccess(res, {

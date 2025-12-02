@@ -92,46 +92,6 @@ const startServer = async () => {
       // Continue even if sync has issues (tables might already exist)
     }
     
-    // Auto-migrate: Add email token fields if they don't exist
-    try {
-      console.log('🔄 Checking for email token fields...');
-      const [existingColumns] = await sequelize.query(`
-        SELECT COLUMN_NAME 
-        FROM INFORMATION_SCHEMA.COLUMNS 
-        WHERE TABLE_SCHEMA = DATABASE() 
-        AND TABLE_NAME = 'users' 
-        AND COLUMN_NAME IN ('emailVerificationToken', 'passwordResetToken')
-      `);
-      
-      const existingColumnNames = existingColumns.map(col => col.COLUMN_NAME);
-      const columnsToAdd = [];
-      
-      if (!existingColumnNames.includes('emailVerificationToken')) {
-        columnsToAdd.push('emailVerificationToken VARCHAR(255) NULL');
-        columnsToAdd.push('emailVerificationTokenExpiry DATETIME NULL');
-      }
-      
-      if (!existingColumnNames.includes('passwordResetToken')) {
-        columnsToAdd.push('passwordResetToken VARCHAR(255) NULL');
-        columnsToAdd.push('passwordResetTokenExpiry DATETIME NULL');
-      }
-      
-      if (columnsToAdd.length > 0) {
-        const alterQuery = `ALTER TABLE users ADD COLUMN ${columnsToAdd.join(', ADD COLUMN ')}`;
-        await sequelize.query(alterQuery);
-        console.log('✅ Added email token fields:', columnsToAdd.map(col => col.split(' ')[0]).join(', '));
-      } else {
-        console.log('✅ Email token fields already exist');
-      }
-    } catch (migrationError) {
-      // Ignore duplicate column errors
-      if (!migrationError.message.includes('Duplicate column name')) {
-        console.error('⚠️  Email token fields migration warning:', migrationError.message);
-      } else {
-        console.log('✅ Email token fields already exist');
-      }
-    }
-    
     // Explicitly ensure all tables exist (they might not be created by sync)
     // This runs regardless of whether the main sync succeeded or failed
     console.log('🔄 Ensuring all tables exist...');

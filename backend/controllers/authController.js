@@ -2,8 +2,6 @@ const { User, Role, UserRole, Student } = require('../models');
 const { generateToken } = require('../config/jwt');
 const { sendSuccess, sendError, sendUnauthorized } = require('../utils/responseHandler');
 const { HTTP_STATUS, ROLES } = require('../utils/constants');
-const emailService = require('../services/emailService');
-const crypto = require('crypto');
 
 /**
  * Register a new user
@@ -59,34 +57,17 @@ const register = async (req, res) => {
       }
     }
 
-    // Generate email verification token
-    const verificationToken = crypto.randomBytes(32).toString('hex');
-    const verificationTokenExpiry = new Date();
-    verificationTokenExpiry.setHours(verificationTokenExpiry.getHours() + 24); // 24 hours expiry
-
-    // Save verification token to user
-    user.emailVerificationToken = verificationToken;
-    user.emailVerificationTokenExpiry = verificationTokenExpiry;
-    await user.save();
-
-    // Send verification email (non-blocking)
-    emailService.sendVerificationEmail(user, verificationToken).catch(err => {
-      console.error('Error sending verification email:', err);
-      // Don't fail registration if email fails
-    });
-
     // Generate token
     const token = generateToken({ userId: user.id, email: user.email });
 
     // Remove password from response
     const userResponse = user.toJSON();
     delete userResponse.password;
-    delete userResponse.emailVerificationToken;
 
     return sendSuccess(res, {
       user: userResponse,
       token
-    }, 'User registered successfully. Please check your email to verify your account.', HTTP_STATUS.CREATED);
+    }, 'User registered successfully', HTTP_STATUS.CREATED);
   } catch (error) {
     return sendError(res, error.message, HTTP_STATUS.INTERNAL_SERVER_ERROR);
   }
@@ -218,168 +199,10 @@ const changePassword = async (req, res) => {
   }
 };
 
-/**
- * Verify email address
- */
-const verifyEmail = async (req, res) => {
-  try {
-    const { token } = req.body;
-
-    if (!token) {
-      return sendError(res, 'Verification token is required', HTTP_STATUS.BAD_REQUEST);
-    }
-
-    // Find user with matching token
-    const user = await User.findOne({
-      where: {
-        emailVerificationToken: token,
-        emailVerificationTokenExpiry: {
-          [require('sequelize').Op.gt]: new Date()
-        }
-      }
-    });
-
-    if (!user) {
-      return sendError(res, 'Invalid or expired verification token', HTTP_STATUS.BAD_REQUEST);
-    }
-
-    // Verify email
-    user.isEmailVerified = true;
-    user.emailVerificationToken = null;
-    user.emailVerificationTokenExpiry = null;
-    await user.save();
-
-    return sendSuccess(res, { user: { id: user.id, email: user.email, isEmailVerified: true } }, 'Email verified successfully');
-  } catch (error) {
-    return sendError(res, error.message, HTTP_STATUS.INTERNAL_SERVER_ERROR);
-  }
-};
-
-/**
- * Resend verification email
- */
-const resendVerificationEmail = async (req, res) => {
-  try {
-    const { email } = req.body;
-
-    if (!email) {
-      return sendError(res, 'Email is required', HTTP_STATUS.BAD_REQUEST);
-    }
-
-    const user = await User.findOne({ where: { email: email.toLowerCase().trim() } });
-
-    if (!user) {
-      // Don't reveal if user exists for security
-      return sendSuccess(res, null, 'If an account exists with this email, a verification email has been sent.');
-    }
-
-    if (user.isEmailVerified) {
-      return sendError(res, 'Email is already verified', HTTP_STATUS.BAD_REQUEST);
-    }
-
-    // Generate new verification token
-    const verificationToken = crypto.randomBytes(32).toString('hex');
-    const verificationTokenExpiry = new Date();
-    verificationTokenExpiry.setHours(verificationTokenExpiry.getHours() + 24);
-
-    user.emailVerificationToken = verificationToken;
-    user.emailVerificationTokenExpiry = verificationTokenExpiry;
-    await user.save();
-
-    // Send verification email
-    await emailService.sendVerificationEmail(user, verificationToken);
-
-    return sendSuccess(res, null, 'Verification email sent successfully');
-  } catch (error) {
-    return sendError(res, error.message, HTTP_STATUS.INTERNAL_SERVER_ERROR);
-  }
-};
-
-/**
- * Request password reset
- */
-const requestPasswordReset = async (req, res) => {
-  try {
-    const { email } = req.body;
-
-    if (!email) {
-      return sendError(res, 'Email is required', HTTP_STATUS.BAD_REQUEST);
-    }
-
-    const user = await User.findOne({ where: { email: email.toLowerCase().trim() } });
-
-    if (!user) {
-      // Don't reveal if user exists for security
-      return sendSuccess(res, null, 'If an account exists with this email, a password reset link has been sent.');
-    }
-
-    // Generate password reset token
-    const resetToken = crypto.randomBytes(32).toString('hex');
-    const resetTokenExpiry = new Date();
-    resetTokenExpiry.setHours(resetTokenExpiry.getHours() + 1); // 1 hour expiry
-
-    user.passwordResetToken = resetToken;
-    user.passwordResetTokenExpiry = resetTokenExpiry;
-    await user.save();
-
-    // Send password reset email
-    await emailService.sendPasswordResetEmail(user, resetToken);
-
-    return sendSuccess(res, null, 'Password reset email sent successfully');
-  } catch (error) {
-    return sendError(res, error.message, HTTP_STATUS.INTERNAL_SERVER_ERROR);
-  }
-};
-
-/**
- * Reset password
- */
-const resetPassword = async (req, res) => {
-  try {
-    const { token, newPassword } = req.body;
-
-    if (!token || !newPassword) {
-      return sendError(res, 'Token and new password are required', HTTP_STATUS.BAD_REQUEST);
-    }
-
-    if (newPassword.length < 6) {
-      return sendError(res, 'Password must be at least 6 characters long', HTTP_STATUS.BAD_REQUEST);
-    }
-
-    // Find user with matching token
-    const user = await User.findOne({
-      where: {
-        passwordResetToken: token,
-        passwordResetTokenExpiry: {
-          [require('sequelize').Op.gt]: new Date()
-        }
-      }
-    });
-
-    if (!user) {
-      return sendError(res, 'Invalid or expired reset token', HTTP_STATUS.BAD_REQUEST);
-    }
-
-    // Update password
-    user.password = newPassword;
-    user.passwordResetToken = null;
-    user.passwordResetTokenExpiry = null;
-    await user.save();
-
-    return sendSuccess(res, null, 'Password reset successfully');
-  } catch (error) {
-    return sendError(res, error.message, HTTP_STATUS.INTERNAL_SERVER_ERROR);
-  }
-};
-
 module.exports = {
   register,
   login,
   getProfile,
-  changePassword,
-  verifyEmail,
-  resendVerificationEmail,
-  requestPasswordReset,
-  resetPassword
+  changePassword
 };
 

@@ -969,31 +969,6 @@
         
         let currentEditingStudentId = null;
         
-        // Resend verification email
-        async function resendVerificationEmail(email, studentId) {
-            try {
-                if (typeof API === 'undefined' || !API.auth || !API.auth.resendVerification) {
-                    showMessage('API not loaded. Please refresh the page.', 'error');
-                    return;
-                }
-                
-                const response = await API.auth.resendVerification(email);
-                
-                if (response && response.success) {
-                    showMessage(`Verification email sent successfully to ${email}`, 'success');
-                    // Optionally refresh the student view to update status
-                    setTimeout(() => {
-                        viewStudent(studentId);
-                    }, 2000);
-                } else {
-                    showMessage(response?.message || 'Failed to send verification email', 'error');
-                }
-            } catch (error) {
-                console.error('Error resending verification email:', error);
-                showMessage(error.message || 'Failed to send verification email. Please try again.', 'error');
-            }
-        }
-        
         // View student details
         async function viewStudent(studentId) {
             try {
@@ -1011,10 +986,6 @@
                     const profileImage = student.profileImage || 'assets/images/author/author-01.jpg';
                     const joinDate = student.createdAt ? new Date(student.createdAt).toLocaleDateString() : 'N/A';
                     const status = student.isActive ? '<span class="badge bg-success">Active</span>' : '<span class="badge bg-secondary">Inactive</span>';
-                    const isEmailVerified = student.isEmailVerified === true || student.isEmailVerified === 1;
-                    const emailVerificationStatus = isEmailVerified 
-                        ? '<span class="badge bg-success"><i class="icofont-check-circled"></i> Verified</span>'
-                        : '<span class="badge bg-warning"><i class="icofont-close-circled"></i> Not Verified</span>';
                     
                     // Get enrollments with course details
                     let studentEnrollments = [];
@@ -1093,16 +1064,7 @@
                                 <table class="table table-borderless">
                                     <tr>
                                         <th>Email:</th>
-                                        <td>
-                                            ${email}
-                                            ${!isEmailVerified ? `<button class="btn btn-sm btn-outline-warning ms-2" onclick="resendVerificationEmail('${email}', ${studentId})" title="Resend verification email">
-                                                <i class="icofont-envelope"></i> Resend Verification
-                                            </button>` : ''}
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <th>Email Verification:</th>
-                                        <td>${emailVerificationStatus}</td>
+                                        <td>${email}</td>
                                     </tr>
                                     <tr>
                                         <th>Phone:</th>

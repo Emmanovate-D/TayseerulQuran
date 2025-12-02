@@ -62,22 +62,6 @@ const User = sequelize.define('User', {
     type: DataTypes.BOOLEAN,
     defaultValue: false
   },
-  emailVerificationToken: {
-    type: DataTypes.STRING(255),
-    allowNull: true
-  },
-  emailVerificationTokenExpiry: {
-    type: DataTypes.DATE,
-    allowNull: true
-  },
-  passwordResetToken: {
-    type: DataTypes.STRING(255),
-    allowNull: true
-  },
-  passwordResetTokenExpiry: {
-    type: DataTypes.DATE,
-    allowNull: true
-  },
   lastLogin: {
     type: DataTypes.DATE,
     allowNull: true

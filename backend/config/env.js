@@ -21,16 +21,6 @@ const env = {
   // For development, you can use '*' to allow all origins
   CORS_ORIGIN: process.env.CORS_ORIGIN || 'http://localhost:5500,http://localhost:8080,http://127.0.0.1:5500,http://127.0.0.1:8080',
   
-  // Email Configuration
-  EMAIL_HOST: process.env.EMAIL_HOST || 'smtp.gmail.com',
-  EMAIL_PORT: process.env.EMAIL_PORT || 587,
-  EMAIL_SECURE: process.env.EMAIL_SECURE || 'false',
-  EMAIL_USER: process.env.EMAIL_USER || '',
-  EMAIL_PASSWORD: process.env.EMAIL_PASSWORD || '',
-  EMAIL_FROM: process.env.EMAIL_FROM || process.env.EMAIL_USER || 'noreply@tayseerulquran.com',
-  EMAIL_FROM_NAME: process.env.EMAIL_FROM_NAME || 'TayseerulQuran',
-  FRONTEND_URL: process.env.FRONTEND_URL || 'http://localhost:5500',
-  
   // Payment Gateway Configuration
   // Stripe
   STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY || '',
