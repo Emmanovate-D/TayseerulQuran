@@ -298,37 +298,8 @@
                     return;
                 }
                 
-                // First, check if user has related records that prevent deletion
-                try {
-                    const userResponse = await API.user.getById(id);
-                    if (userResponse.success && userResponse.data && userResponse.data.user) {
-                        const user = userResponse.data.user;
-                        
-                        // Check for related tutors
-                        if (user.tutorProfile || user.tutorId) {
-                            showMessage('Cannot delete this user because they have a tutor profile. Please remove the tutor profile first.', 'error');
-                            return;
-                        }
-                        
-                        // Check for related blog posts
-                        try {
-                            const blogResponse = await API.blog.getAll({ authorId: id, limit: 1 });
-                            if (blogResponse.success && blogResponse.data) {
-                                const posts = blogResponse.data.posts || blogResponse.data || [];
-                                if (posts.length > 0) {
-                                    showMessage('Cannot delete this user because they have blog posts. Please delete or reassign the blog posts first.', 'error');
-                                    return;
-                                }
-                            }
-                        } catch (e) {
-                            console.warn('Error checking blog posts:', e);
-                        }
-                    }
-                } catch (e) {
-                    console.warn('Error checking user details:', e);
-                }
-                
-                // Attempt to delete
+                // Attempt to delete - let the backend handle foreign key constraints
+                // The backend will return appropriate errors if deletion is not allowed
                 const response = await API.user.delete(id);
                 
                 if (response.success) {
