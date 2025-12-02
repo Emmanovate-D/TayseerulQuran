@@ -298,26 +298,33 @@
                     return;
                 }
                 
+                console.log('Attempting to delete student with ID:', id);
+                
                 // Attempt to delete - let the backend handle foreign key constraints
                 // The backend will return appropriate errors if deletion is not allowed
                 const response = await API.user.delete(id);
                 
-                if (response.success) {
+                console.log('Delete response:', response);
+                
+                // Check if deletion was successful
+                if (response && response.success) {
                     showMessage('Student deleted successfully!');
                     
                     // Find the row within the table body - scope to table body to ensure correct selection
                     const $row = $(`#studentsTableBody tr[data-student-id="${id}"]`);
+                    console.log('Found rows to delete:', $row.length);
                     
                     if ($row.length > 0) {
-                        // Remove the row with fade animation
-                        $row.fadeOut(300, function() {
-                            $(this).remove();
-                            // Reload if table is empty
-                            const remainingRows = $('#studentsTableBody tr').length;
-                            if (remainingRows === 0) {
-                                loadStudents();
-                            }
-                        });
+                        // Remove the row immediately (no fade animation to ensure it works)
+                        $row.remove();
+                        console.log('Row removed from table');
+                        
+                        // Check if table is empty and reload if needed
+                        const remainingRows = $('#studentsTableBody tr').length;
+                        console.log('Remaining rows:', remainingRows);
+                        if (remainingRows === 0) {
+                            loadStudents();
+                        }
                     } else {
                         // If row not found by selector, reload the entire table
                         console.warn('Row not found with selector, reloading table...');
@@ -325,9 +332,11 @@
                     }
                 } else {
                     // Check for foreign key constraint errors
-                    const errorMsg = response.message || 'Failed to delete student';
-                    if (errorMsg.includes('foreign key') || errorMsg.includes('constraint')) {
-                        showMessage('Cannot delete this student because they have related records (tutor profile, blog posts, etc.). Please remove related records first.', 'error');
+                    const errorMsg = (response && response.message) || 'Failed to delete student';
+                    console.error('Delete failed:', errorMsg);
+                    
+                    if (errorMsg.includes('foreign key') || errorMsg.includes('constraint') || errorMsg.includes('Cannot delete')) {
+                        showMessage('Cannot delete this student because they have related records (tutor profile, blog posts, enrollments, etc.). Please remove related records first.', 'error');
                     } else {
                         showMessage(errorMsg, 'error');
                     }
