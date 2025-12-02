@@ -30,6 +30,55 @@ const env = {
   EMAIL_FROM: process.env.EMAIL_FROM || process.env.EMAIL_USER || 'noreply@tayseerulquran.com',
   EMAIL_FROM_NAME: process.env.EMAIL_FROM_NAME || 'TayseerulQuran',
   FRONTEND_URL: process.env.FRONTEND_URL || 'http://localhost:5500',
+  
+  // Payment Gateway Configuration
+  // Stripe
+  STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY || '',
+  STRIPE_PUBLISHABLE_KEY: process.env.STRIPE_PUBLISHABLE_KEY || '',
+  STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET || '',
+  
+  // PayPal
+  PAYPAL_CLIENT_ID: process.env.PAYPAL_CLIENT_ID || '',
+  PAYPAL_CLIENT_SECRET: process.env.PAYPAL_CLIENT_SECRET || '',
+  PAYPAL_WEBHOOK_SECRET: process.env.PAYPAL_WEBHOOK_SECRET || '',
+  PAYPAL_MODE: process.env.PAYPAL_MODE || 'sandbox', // 'sandbox' or 'live'
+};
+
+/**
+ * Get payment gateway configuration
+ * @param {string} gatewayType - 'stripe', 'paypal', or 'bank_transfer'
+ * @returns {object} Gateway configuration object
+ */
+env.getGatewayConfig = function(gatewayType) {
+  const isProduction = env.NODE_ENV === 'production';
+  
+  switch (gatewayType.toLowerCase()) {
+    case 'stripe':
+      return {
+        secretKey: env.STRIPE_SECRET_KEY || 'test_key',
+        publishableKey: env.STRIPE_PUBLISHABLE_KEY || '',
+        webhookSecret: env.STRIPE_WEBHOOK_SECRET || 'test_webhook_secret',
+        sandbox: !isProduction
+      };
+    
+    case 'paypal':
+      return {
+        clientId: env.PAYPAL_CLIENT_ID || '',
+        clientSecret: env.PAYPAL_CLIENT_SECRET || '',
+        webhookSecret: env.PAYPAL_WEBHOOK_SECRET || 'test_webhook_secret',
+        mode: env.PAYPAL_MODE || 'sandbox', // 'sandbox' or 'live'
+        sandbox: env.PAYPAL_MODE !== 'live'
+      };
+    
+    case 'bank_transfer':
+      return {
+        // Bank transfer doesn't require API keys
+        sandbox: !isProduction
+      };
+    
+    default:
+      throw new Error(`Unsupported payment gateway: ${gatewayType}`);
+  }
 };
 
 // Validate required environment variables

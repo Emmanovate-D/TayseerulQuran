@@ -144,9 +144,13 @@ class PayPalGateway extends PaymentGateway {
   constructor(config) {
     super(config);
     // In production, use PayPal SDK
-    this.apiUrl = config.sandbox 
+    // Use mode from config (sandbox/live) or fallback to sandbox flag
+    const isSandbox = config.mode === 'sandbox' || (config.sandbox !== false && !config.mode);
+    this.apiUrl = isSandbox 
       ? 'https://api.sandbox.paypal.com' 
       : 'https://api.paypal.com';
+    this.clientId = config.clientId || '';
+    this.clientSecret = config.clientSecret || '';
   }
 
   async processPayment(paymentData) {

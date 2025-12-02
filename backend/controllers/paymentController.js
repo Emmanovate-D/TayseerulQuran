@@ -4,6 +4,7 @@ const { HTTP_STATUS } = require('../utils/constants');
 const { Op } = require('sequelize');
 const { PaymentGatewayFactory, processPaymentWithIdempotency } = require('../services/paymentGateway');
 const emailService = require('../services/emailService');
+const env = require('../config/env');
 const crypto = require('crypto');
 
 /**
@@ -245,16 +246,12 @@ const processPayment = async (req, res) => {
       metadata: metadata || {}
     });
 
-    // Get gateway configuration (in production, load from environment variables)
+    // Get gateway configuration from centralized config
     const gatewayType = paymentMethod === 'credit_card' ? 'stripe' : 
                        paymentMethod === 'paypal' ? 'paypal' : 
                        'bank_transfer';
     
-    const gatewayConfig = {
-      secretKey: process.env[`${gatewayType.toUpperCase()}_SECRET_KEY`] || 'test_key',
-      webhookSecret: process.env[`${gatewayType.toUpperCase()}_WEBHOOK_SECRET`] || 'test_webhook_secret',
-      sandbox: process.env.NODE_ENV !== 'production'
-    };
+    const gatewayConfig = env.getGatewayConfig(gatewayType);
 
     // Initialize gateway
     const gateway = PaymentGatewayFactory.create(gatewayType, gatewayConfig);
@@ -340,12 +337,8 @@ const handleWebhook = async (req, res) => {
     const signature = req.headers['x-signature'] || req.headers['stripe-signature'] || req.headers['paypal-transmission-sig'];
     const payload = JSON.stringify(req.body);
 
-    // Get gateway configuration
-    const gatewayConfig = {
-      secretKey: process.env[`${gatewayType.toUpperCase()}_SECRET_KEY`] || 'test_key',
-      webhookSecret: process.env[`${gatewayType.toUpperCase()}_WEBHOOK_SECRET`] || 'test_webhook_secret',
-      sandbox: process.env.NODE_ENV !== 'production'
-    };
+    // Get gateway configuration from centralized config
+    const gatewayConfig = env.getGatewayConfig(gatewayType);
 
     // Initialize gateway
     const gateway = PaymentGatewayFactory.create(gatewayType, gatewayConfig);
@@ -548,10 +541,7 @@ const processRefund = async (req, res) => {
 
     // Get gateway
     const gatewayType = payment.metadata?.gateway || 'stripe';
-    const gatewayConfig = {
-      secretKey: process.env[`${gatewayType.toUpperCase()}_SECRET_KEY`] || 'test_key',
-      webhookSecret: process.env[`${gatewayType.toUpperCase()}_WEBHOOK_SECRET`] || 'test_webhook_secret'
-    };
+    const gatewayConfig = env.getGatewayConfig(gatewayType);
 
     const gateway = PaymentGatewayFactory.create(gatewayType, gatewayConfig);
 
