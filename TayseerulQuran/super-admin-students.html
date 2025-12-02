@@ -218,6 +218,39 @@
             </div>
         </div>
 
+        <!-- Assign Teacher Modal -->
+        <div class="modal fade" id="assignTeacherModal" tabindex="-1">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Assign Teacher to Students</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form>
+                            <div class="mb-3">
+                                <label class="form-label">Select Students</label>
+                                <select class="form-control" multiple size="8" id="assignTeacherStudents">
+                                    <option value="">Loading students...</option>
+                                </select>
+                                <small class="text-muted">Hold Ctrl/Cmd to select multiple students</small>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Select Teacher</label>
+                                <select class="form-control" id="assignTeacherTutor">
+                                    <option value="">Loading teachers...</option>
+                                </select>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-sm btn-secondary px-3 py-2 small" data-bs-dismiss="modal" style="font-size: 0.75rem;">Cancel</button>
+                        <button type="button" class="btn btn-sm btn-primary px-3 py-2 small" onclick="assignTeacher()" style="font-size: 0.75rem;">Assign Teacher</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <a href="#" class="back-to-top">
             <i class="icofont-simple-up"></i>
         </a>
