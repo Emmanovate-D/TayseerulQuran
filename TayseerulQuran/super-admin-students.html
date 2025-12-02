@@ -101,7 +101,7 @@
                         <i class="icofont-logout me-1"></i> Logout
                     </button>
                     <a class="action author" href="#">
-                        <img src="assets/images/author/author-07.jpg" alt="Author">
+                        <img src="assets/images/author/author-07.jpg" alt="Author" onerror="this.src='assets/images/author/author-01.jpg'">
                     </a>
                     <div class="dropdown">
                         <button class="action more" data-bs-toggle="dropdown">
@@ -338,8 +338,22 @@
                     const errorMsg = (response && response.message) || 'Failed to delete student';
                     console.error('Delete failed:', errorMsg);
                     
+                    // Parse specific foreign key constraint errors to provide better error messages
+                    let specificErrorMsg = '';
                     if (errorMsg.includes('foreign key') || errorMsg.includes('constraint') || errorMsg.includes('Cannot delete')) {
-                        showMessage('Cannot delete this student because they have related records (tutor profile, blog posts, enrollments, etc.). Please remove related records first.', 'error');
+                        // Check for specific constraint types
+                        if (errorMsg.includes('tutors') || errorMsg.includes('tutor')) {
+                            specificErrorMsg = 'Cannot delete this student because they have a tutor profile. Please remove the tutor profile first.';
+                        } else if (errorMsg.includes('blog_posts') || errorMsg.includes('blog')) {
+                            specificErrorMsg = 'Cannot delete this student because they have blog posts. Please delete or reassign the blog posts first.';
+                        } else if (errorMsg.includes('enrollments') || errorMsg.includes('enrollment')) {
+                            specificErrorMsg = 'Cannot delete this student because they have active enrollments. Please cancel all enrollments first.';
+                        } else if (errorMsg.includes('payments') || errorMsg.includes('payment')) {
+                            specificErrorMsg = 'Cannot delete this student because they have payment records. Please contact an administrator.';
+                        } else {
+                            specificErrorMsg = 'Cannot delete this student because they have related records. Please remove related records first or contact an administrator.';
+                        }
+                        showMessage(specificErrorMsg, 'error');
                     } else {
                         showMessage(errorMsg, 'error');
                     }
@@ -348,9 +362,22 @@
                 console.error('Error deleting student:', error);
                 const errorMsg = error.message || 'Failed to delete student. Please try again.';
                 
-                // Check for foreign key constraint errors
+                // Parse specific foreign key constraint errors to provide better error messages
+                let specificErrorMsg = '';
                 if (errorMsg.includes('foreign key') || errorMsg.includes('constraint') || errorMsg.includes('Cannot delete')) {
-                    showMessage('Cannot delete this student because they have related records (tutor profile, blog posts, enrollments, etc.). Please remove related records first or contact an administrator.', 'error');
+                    // Check for specific constraint types
+                    if (errorMsg.includes('tutors') || errorMsg.includes('tutor')) {
+                        specificErrorMsg = 'Cannot delete this student because they have a tutor profile. Please remove the tutor profile first.';
+                    } else if (errorMsg.includes('blog_posts') || errorMsg.includes('blog')) {
+                        specificErrorMsg = 'Cannot delete this student because they have blog posts. Please delete or reassign the blog posts first.';
+                    } else if (errorMsg.includes('enrollments') || errorMsg.includes('enrollment')) {
+                        specificErrorMsg = 'Cannot delete this student because they have active enrollments. Please cancel all enrollments first.';
+                    } else if (errorMsg.includes('payments') || errorMsg.includes('payment')) {
+                        specificErrorMsg = 'Cannot delete this student because they have payment records. Please contact an administrator.';
+                    } else {
+                        specificErrorMsg = 'Cannot delete this student because they have related records. Please remove related records first or contact an administrator.';
+                    }
+                    showMessage(specificErrorMsg, 'error');
                 } else {
                     showMessage(errorMsg, 'error');
                 }
