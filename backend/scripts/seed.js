@@ -61,6 +61,7 @@ const seedDatabase = async () => {
     const studentRole = await Role.findOne({ where: { name: ROLES.STUDENT } });
 
     // Create test users if they don't exist
+    // Note: Student test user removed - students table will be empty for real enrollments
     const testUsers = [
       {
         email: 'superadmin@tayseerulquran.com',
@@ -89,14 +90,8 @@ const seedDatabase = async () => {
         firstName: 'Staff',
         lastName: 'Member',
         role: staffRole
-      },
-      {
-        email: 'student@tayseerulquran.com',
-        password: 'Student123!',
-        firstName: 'Student',
-        lastName: 'Learner',
-        role: studentRole
       }
+      // Student test user removed - table will be empty for real students to enroll
     ];
 
     let usersCreated = 0;
