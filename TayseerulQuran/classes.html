@@ -69,7 +69,7 @@
                                 <li><a href="contact.html">Contact</a></li>
                             </ul>
                         </div>
-                        <div class="header-sign-in-up d-none d-lg-block">
+                        <div class="header-sign-in-up d-none d-lg-block" id="authButtons">
                             <ul>
                                 <li><a class="sign-in" href="login.html">Sign In</a></li>
                                 <li><a class="sign-up" href="register.html">Sign Up</a></li>
@@ -93,7 +93,7 @@
                 <p><i class="flaticon-phone-call"></i> <a href="tel:9702621413">(970) 262-1413</a></p>
                 <p><i class="flaticon-email"></i> <a href="mailto:address@gmail.com">address@gmail.com</a></p>
             </div>
-            <div class="mobile-sign-in-up">
+            <div class="mobile-sign-in-up" id="mobileAuthButtons">
                 <ul>
                     <li><a class="sign-in" href="login.html">Sign In</a></li>
                     <li><a class="sign-up" href="register.html">Sign Up</a></li>
@@ -488,6 +488,12 @@
             }
         });
     </script>
+    
+    <!-- API Service -->
+    <script src="assets/js/api.js"></script>
+    
+    <!-- Auth Header Script - Updates Sign In/Sign Up to Logout when logged in -->
+    <script src="assets/js/auth-header.js"></script>
 
 </body>
 
