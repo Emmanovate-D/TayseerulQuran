@@ -138,13 +138,10 @@
                         <div class="admin-top-bar flex-wrap mb-4">
                             <div>
                                 <h3 class="title mb-2">Student Management</h3>
-                                <p class="text-muted">View student profiles and assign them to teachers</p>
+                                <p class="text-muted">View and manage student profiles</p>
                             </div>
                             <div class="d-flex gap-2">
                                 <input type="text" class="form-control" placeholder="Search students..." style="max-width: 300px;">
-                                <button class="btn btn-sm btn-primary px-3 py-2 small" data-permission="assign_students_to_teachers" data-bs-toggle="modal" data-bs-target="#assignTeacherModal" style="font-size: 0.75rem;">
-                                    <i class="icofont-user me-1"></i> Assign to Teacher
-                                </button>
                             </div>
                         </div>
 
@@ -159,14 +156,13 @@
                                                 <th>Name</th>
                                                 <th>Email</th>
                                                 <th>Enrolled Courses</th>
-                                                <th>Assigned Teacher</th>
                                                 <th>Join Date</th>
                                                 <th>Actions</th>
                                             </tr>
                                         </thead>
                                         <tbody id="studentsTableBody">
                                             <tr>
-                                                <td colspan="7" class="text-center">
+                                                <td colspan="6" class="text-center">
                                                     <div class="spinner-border text-primary" role="status">
                                                         <span class="visually-hidden">Loading...</span>
                                                     </div>
@@ -201,12 +197,9 @@
                                 <input type="email" class="form-control" id="editStudentEmail" required>
                             </div>
                             
-                            
                             <div class="mb-3">
-                                <label class="form-label">Assigned Teacher</label>
-                                <select class="form-control" id="editStudentTeacher">
-                                    <option value="">Not Assigned</option>
-                                </select>
+                                <label class="form-label">Phone</label>
+                                <input type="tel" class="form-control" id="editStudentPhone" placeholder="Optional">
                             </div>
                         </form>
                     </div>
@@ -651,191 +644,6 @@
             }
         }
         
-        // Load students and teachers for assignment modal
-        async function loadAssignTeacherModal() {
-            try {
-                if (typeof API === 'undefined') {
-                    showMessage('API not loaded. Please refresh the page.', 'error');
-                    return;
-                }
-                
-                // Load all students
-                const studentsResponse = await API.user.getAll({ role: 'student', limit: 1000 });
-                const students = studentsResponse.success && studentsResponse.data ? 
-                               (studentsResponse.data.users || studentsResponse.data || []) : [];
-                
-                // Load all tutors (teachers)
-                const tutorsResponse = await API.tutor.getAll();
-                const tutors = tutorsResponse.success && tutorsResponse.data ? 
-                              (tutorsResponse.data.tutors || tutorsResponse.data || []) : [];
-                
-                // Filter only approved tutors
-                const approvedTutors = tutors.filter(tutor => tutor.isApproved === true);
-                
-                // Populate students dropdown
-                const studentsSelect = $('#assignTeacherModal select[multiple]');
-                studentsSelect.empty();
-                students.forEach(student => {
-                    const fullName = `${student.firstName || ''} ${student.lastName || ''}`.trim() || student.email;
-                    studentsSelect.append(`<option value="${student.id}">${fullName} (${student.email})</option>`);
-                });
-                
-                // Populate teachers dropdown
-                const teachersSelect = $('#assignTeacherModal select:not([multiple])');
-                teachersSelect.empty();
-                teachersSelect.append('<option value="">Select Teacher</option>');
-                approvedTutors.forEach(tutor => {
-                    if (tutor.user) {
-                        const fullName = `${tutor.user.firstName || ''} ${tutor.user.lastName || ''}`.trim();
-                        if (fullName) {
-                            teachersSelect.append(`<option value="${tutor.id}" data-user-id="${tutor.userId || tutor.user.id}">${fullName}</option>`);
-                        }
-                    }
-                });
-                
-                if (approvedTutors.length === 0) {
-                    teachersSelect.append('<option value="" disabled>No approved teachers available</option>');
-                }
-            } catch (error) {
-                console.error('Error loading assign teacher modal:', error);
-                showMessage('Failed to load students and teachers. Please refresh the page.', 'error');
-            }
-        }
-        
-        // Assign teacher
-        async function assignTeacher() {
-            try {
-                if (typeof API === 'undefined') {
-                    showMessage('API not loaded. Please refresh the page.', 'error');
-                    return;
-                }
-                
-                const selectedStudents = [];
-                $('#assignTeacherModal select[multiple] option:selected').each(function() {
-                    const studentId = $(this).val();
-                    if (studentId) {
-                        selectedStudents.push(parseInt(studentId));
-                    }
-                });
-                
-                const tutorOption = $('#assignTeacherModal select:not([multiple]) option:selected');
-                const tutorId = tutorOption.val();
-                
-                if (selectedStudents.length === 0) {
-                    showMessage('Please select at least one student', 'error');
-                    return;
-                }
-                
-                if (!tutorId) {
-                    showMessage('Please select a teacher', 'error');
-                    return;
-                }
-                
-                // Assign tutor to each selected student
-                let successCount = 0;
-                let errorCount = 0;
-                const errors = [];
-                
-                for (const studentId of selectedStudents) {
-                    try {
-                        // Get student details to check if they have a student profile
-                        const studentResponse = await API.user.getById(studentId);
-                        if (studentResponse.success && studentResponse.data && studentResponse.data.user) {
-                            const student = studentResponse.data.user;
-                            
-                            // Check if student has a Student profile
-                            if (student.studentProfile && student.studentProfile.id) {
-                                // Update student profile with tutorId
-                                const updateResponse = await API.student.update(student.studentProfile.id, {
-                                    tutorId: parseInt(tutorId)
-                                });
-                                
-                                if (updateResponse.success) {
-                                    successCount++;
-                                } else {
-                                    errorCount++;
-                                    errors.push(`Student ${student.firstName} ${student.lastName}: ${updateResponse.message || 'Update failed'}`);
-                                }
-                            } else {
-                                // Try to create student profile or update via user
-                                // First, try to get or create student profile
-                                try {
-                                    const studentProfilesResponse = await API.student.getAll();
-                                    let studentProfile = null;
-                                    
-                                    if (studentProfilesResponse.success && studentProfilesResponse.data) {
-                                        const profiles = studentProfilesResponse.data.students || studentProfilesResponse.data || [];
-                                        studentProfile = profiles.find(p => p.userId === studentId);
-                                    }
-                                    
-                                    if (studentProfile) {
-                                        // Update existing profile
-                                        const updateResponse = await API.student.update(studentProfile.id, {
-                                            tutorId: parseInt(tutorId)
-                                        });
-                                        
-                                        if (updateResponse.success) {
-                                            successCount++;
-                                        } else {
-                                            errorCount++;
-                                            errors.push(`Student ${student.firstName} ${student.lastName}: ${updateResponse.message || 'Update failed'}`);
-                                        }
-                                    } else {
-                                        // Create new student profile with tutor
-                                        const createResponse = await API.student.create({
-                                            userId: studentId,
-                                            tutorId: parseInt(tutorId)
-                                        });
-                                        
-                                        if (createResponse.success) {
-                                            successCount++;
-                                        } else {
-                                            errorCount++;
-                                            errors.push(`Student ${student.firstName} ${student.lastName}: ${createResponse.message || 'Creation failed'}`);
-                                        }
-                                    }
-                                } catch (profileError) {
-                                    console.error(`Error handling student profile for ${studentId}:`, profileError);
-                                    errorCount++;
-                                    errors.push(`Student ${student.firstName} ${student.lastName}: Profile error`);
-                                }
-                            }
-                        } else {
-                            errorCount++;
-                            errors.push(`Student ID ${studentId}: Not found`);
-                        }
-                    } catch (error) {
-                        console.error(`Error assigning tutor to student ${studentId}:`, error);
-                        errorCount++;
-                        errors.push(`Student ID ${studentId}: ${error.message || 'Unknown error'}`);
-                    }
-                }
-                
-                // Show result message
-                if (successCount > 0) {
-                    const message = `Successfully assigned teacher to ${successCount} student(s)${errorCount > 0 ? `. ${errorCount} failed.` : ''}`;
-                    showMessage(message, errorCount === 0 ? 'success' : 'warning');
-                    
-                    if (errors.length > 0 && errors.length <= 3) {
-                        console.warn('Assignment errors:', errors);
-                    }
-                    
-            $('#assignTeacherModal').modal('hide');
-                    // Reset form
-                    $('#assignTeacherModal select[multiple]').val([]);
-                    $('#assignTeacherModal select:not([multiple])').val('');
-                    // Reload students to show updated assignments
-                    await loadStudents();
-                } else {
-                    const errorMsg = `Failed to assign teacher to all students. ${errors.length > 0 ? errors.slice(0, 3).join('; ') : 'Please try again.'}`;
-                    showMessage(errorMsg, 'error');
-                }
-            } catch (error) {
-                console.error('Error assigning teacher:', error);
-                showMessage('Failed to assign teacher. Please try again.', 'error');
-            }
-        }
-        
         // Update student
         async function updateStudent() {
             if (!currentEditingStudentId) {
@@ -854,7 +662,6 @@
                 const email = $('#editStudentEmail').val() ? $('#editStudentEmail').val().trim() : '';
                 const phoneInput = $('#editStudentPhone');
                 const phone = phoneInput.length > 0 && phoneInput.val() ? phoneInput.val().trim() : '';
-                const teacherId = $('#editStudentTeacher').val();
                 
                 if (!fullName || !email) {
                     showMessage('Please fill in all required fields', 'error');
@@ -1075,26 +882,6 @@
                     // Continue without enrollments if this fails - not critical
                 }
                 
-                // Load all students with their profiles to get tutor assignments
-                let studentsWithProfiles = [];
-                let tutorAssignmentMap = {};
-                try {
-                    if (API.student && API.student.getAll) {
-                        const studentsWithProfilesResponse = await API.student.getAll({ limit: 10000 });
-                        if (studentsWithProfilesResponse.success && studentsWithProfilesResponse.data) {
-                            studentsWithProfiles = studentsWithProfilesResponse.data.students || studentsWithProfilesResponse.data || [];
-                            // Create a map of student userId to tutorId
-                            studentsWithProfiles.forEach(studentProfile => {
-                                if (studentProfile.userId && studentProfile.tutorId) {
-                                    tutorAssignmentMap[studentProfile.userId] = studentProfile.tutorId;
-                                }
-                            });
-                        }
-                    }
-                } catch (e) {
-                    console.warn('Error loading student profiles:', e);
-                }
-                
                 // Create a map of student enrollments
                 const enrollmentMap = {};
                 enrollments.forEach(enrollment => {
@@ -1107,30 +894,10 @@
                     }
                 });
                 
-                // Load all tutors to get their names
-                let tutorNameMap = {};
-                try {
-                    const tutorsResponse = await API.tutor.getAll();
-                    if (tutorsResponse.success && tutorsResponse.data) {
-                        const tutors = tutorsResponse.data.tutors || tutorsResponse.data || [];
-                        // Create a map of tutorId to tutor name
-                        tutors.forEach(tutor => {
-                            if (tutor.id && tutor.user) {
-                                const tutorName = `${tutor.user.firstName || ''} ${tutor.user.lastName || ''}`.trim();
-                                if (tutorName) {
-                                    tutorNameMap[tutor.id] = tutorName;
-                                }
-                            }
-                        });
-                    }
-                } catch (e) {
-                    console.warn('Error loading tutors:', e);
-                }
-                
                 const tbody = $('#studentsTableBody');
                 
                 if (students.length === 0) {
-                    tbody.html('<tr><td colspan="7" class="text-center text-muted">No students found.</td></tr>');
+                    tbody.html('<tr><td colspan="6" class="text-center text-muted">No students found.</td></tr>');
                     return;
                 }
                 
@@ -1150,10 +917,6 @@
                     // Use only author-01.jpg as fallback to avoid 404 errors
                     const profileImage = student.profileImage || 'assets/images/author/author-01.jpg';
                     
-                    // Get assigned teacher (if any) from the maps we created
-                    const tutorId = tutorAssignmentMap[studentId];
-                    const assignedTeacher = tutorId && tutorNameMap[tutorId] ? tutorNameMap[tutorId] : 'Not Assigned';
-                    
                     html += `
                         <tr data-student-id="${studentId}">
                             <td>${studentId}</td>
@@ -1171,7 +934,6 @@
                                 <span class="badge bg-primary">${enrolledCount}</span>
                                 ${completedEnrollments.length > 0 ? `<br><small class="text-success">${completedEnrollments.length} completed</small>` : ''}
                             </td>
-                            <td>${assignedTeacher}</td>
                             <td>${joinDate}</td>
                             <td>
                                 <button class="btn btn-sm btn-info px-2 py-1" onclick="viewStudent(${studentId})" data-student-id="${studentId}" data-permission="view_student_profile" style="font-size: 0.7rem;">
@@ -1191,7 +953,7 @@
                 tbody.html(html);
             } catch (error) {
                 console.error('Error loading students:', error);
-                $('#studentsTableBody').html(`<tr><td colspan="7" class="text-center text-danger">Error loading students: ${error.message || 'Unknown error'}</td></tr>`);
+                $('#studentsTableBody').html(`<tr><td colspan="6" class="text-center text-danger">Error loading students: ${error.message || 'Unknown error'}</td></tr>`);
             }
         }
         
@@ -1233,11 +995,6 @@
         $(document).ready(function() {
             // Set active menu item
             setActiveMenuItem();
-            
-            // Load assign teacher modal when it opens
-            $('#assignTeacherModal').on('show.bs.modal', function() {
-                loadAssignTeacherModal();
-            });
             
             // Remove old event handlers and add new ones
             $(document).off('click', '[data-bs-target="#viewStudentModal"]');
