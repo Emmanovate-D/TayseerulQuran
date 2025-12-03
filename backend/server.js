@@ -75,8 +75,8 @@ app.use(notFoundHandler);
 // Error handler (must be last)
 app.use(errorHandler);
 
-// Start server
-const startServer = async () => {
+// Initialize database (runs for both standalone and Passenger)
+const initializeDatabase = async () => {
   try {
     // Test database connection
     const dbConnected = await testConnection();
@@ -202,15 +202,37 @@ const startServer = async () => {
     if (dbConnected) {
       await seedDatabase();
     }
+  } catch (error) {
+    console.error('❌ Failed to initialize database:', error);
+    if (env.NODE_ENV === 'production') {
+      process.exit(1);
+    }
+  }
+};
 
-    // Start listening
-    const PORT = env.PORT;
-    app.listen(PORT, () => {
-      console.log(`🚀 Server is running on port ${PORT}`);
+// Check if running under Passenger (Plesk)
+const isPassenger = process.env.PASSENGER_APP_ENV || process.env.PASSENGER;
+
+// Start server (only if not running under Passenger)
+const startServer = async () => {
+  try {
+    // Initialize database first
+    await initializeDatabase();
+
+    // Only start listening if NOT running under Passenger
+    // Passenger manages the server itself
+    if (!isPassenger) {
+      const PORT = env.PORT;
+      app.listen(PORT, () => {
+        console.log(`🚀 Server is running on port ${PORT}`);
+        console.log(`📝 Environment: ${env.NODE_ENV}`);
+        console.log(`🌐 API URL: http://localhost:${PORT}/api`);
+        console.log(`💚 Health Check: http://localhost:${PORT}/api/health`);
+      });
+    } else {
+      console.log('🚀 Running under Passenger - server managed by Passenger');
       console.log(`📝 Environment: ${env.NODE_ENV}`);
-      console.log(`🌐 API URL: http://localhost:${PORT}/api`);
-      console.log(`💚 Health Check: http://localhost:${PORT}/api/health`);
-    });
+    }
   } catch (error) {
     console.error('❌ Failed to start server:', error);
     process.exit(1);
@@ -231,8 +253,17 @@ process.on('uncaughtException', (err) => {
   process.exit(1);
 });
 
-// Start the server
-startServer();
+// Initialize database immediately (for Passenger compatibility)
+// Passenger loads the app, so we need to initialize the database when the module loads
+if (isPassenger) {
+  // For Passenger, initialize database asynchronously but don't block
+  initializeDatabase().catch(err => {
+    console.error('❌ Database initialization error:', err);
+  });
+} else {
+  // For standalone mode, start the server normally
+  startServer();
+}
 
 module.exports = app;
 
