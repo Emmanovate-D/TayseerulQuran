@@ -391,6 +391,14 @@
     <script src="assets/js/vendor/jquery-3.5.1.min.js"></script>
     <script src="assets/js/plugins.min.js"></script>
     <script src="assets/js/main.js"></script>
+    <script>
+        // Force production API URL for tayseerulquran.org
+        if (window.location.hostname === 'tayseerulquran.org' || 
+            window.location.hostname.includes('tayseerulquran.org')) {
+            window.BACKEND_API_URL = window.location.origin + '/api';
+            console.log('Production API URL set to:', window.BACKEND_API_URL);
+        }
+    </script>
     <script src="assets/js/api.js?v=2"></script>
     <script src="assets/js/utils.js"></script>
     <script src="assets/js/role-access-control.js"></script>

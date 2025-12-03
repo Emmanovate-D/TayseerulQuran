@@ -9,26 +9,44 @@ const API_CONFIG = {
   BASE_URL: (() => {
     // Manual override (highest priority) - can be set in HTML before api.js loads
     if (window.BACKEND_API_URL) {
+      console.log('Using manual API URL override:', window.BACKEND_API_URL);
       return window.BACKEND_API_URL;
     }
     
     const hostname = window.location.hostname;
+    const protocol = window.location.protocol;
+    const origin = window.location.origin;
     
-    // Check if we're on Plesk server (intilaq.host, tayseerulquran.org, or plesk.page)
-    if (hostname.includes('intilaq.host') || 
-        hostname.includes('tayseerulquran.org') ||
-        hostname.includes('plesk.page')) {
+    console.log('Detected hostname:', hostname);
+    console.log('Detected origin:', origin);
+    
+    // Check if we're on tayseerulquran.org (production domain)
+    if (hostname === 'tayseerulquran.org' || hostname.includes('tayseerulquran.org')) {
       // Use same domain for backend (if backend is on same server)
-      return window.location.origin + '/api';
+      const apiUrl = origin + '/api';
+      console.log('Using Plesk API URL:', apiUrl);
+      return apiUrl;
+    }
+    
+    // Check if we're on Plesk server (intilaq.host or plesk.page)
+    if (hostname.includes('intilaq.host') || hostname.includes('plesk.page')) {
+      // Use same domain for backend (if backend is on same server)
+      const apiUrl = origin + '/api';
+      console.log('Using Plesk API URL:', apiUrl);
+      return apiUrl;
     }
     
     // Vercel/Render deployment
     if (hostname.includes('vercel.app') || hostname.includes('onrender.com')) {
-      return 'https://tayseerulquran.onrender.com/api';
+      const apiUrl = 'https://tayseerulquran.onrender.com/api';
+      console.log('Using Render API URL:', apiUrl);
+      return apiUrl;
     }
     
     // Development fallback
-    return 'http://localhost:3000/api';
+    const apiUrl = 'http://localhost:3000/api';
+    console.log('Using development API URL:', apiUrl);
+    return apiUrl;
   })(),
   getAuthToken: () => localStorage.getItem('authToken'),
   setAuthToken: (token) => localStorage.setItem('authToken', token),
@@ -96,7 +114,10 @@ async function apiRequest(endpoint, options = {}) {
   } catch (error) {
     // Handle network errors
     if (error.message === 'Failed to fetch' || error.name === 'TypeError') {
-      throw new Error('Unable to connect to server. Please check if the backend is running and try again.');
+      const apiUrl = `${API_CONFIG.BASE_URL}${endpoint}`;
+      console.error('Network error - API URL:', apiUrl);
+      console.error('Full error:', error);
+      throw new Error(`Unable to connect to server at ${apiUrl}. Please check if the backend is running and accessible.`);
     }
     
     // Re-throw if it's already a proper Error object

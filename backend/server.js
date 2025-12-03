@@ -27,6 +27,11 @@ app.use(cors({
     // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
     
+    // Always allow production domain (tayseerulquran.org)
+    if (origin.includes('tayseerulquran.org')) {
+      return callback(null, true);
+    }
+    
     // Always allow Vercel and Render domains
     if (origin.includes('vercel.app') || origin.includes('onrender.com')) {
       return callback(null, true);
