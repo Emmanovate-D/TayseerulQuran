@@ -1,14 +1,86 @@
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 const env = require('./config/env');
-const { testConnection, sequelize } = require('./config/database');
-const { logger } = require('./utils/logger');
-const { errorHandler, notFoundHandler } = require('./middleware/errorHandler');
-const routes = require('./routes');
-const { seedDatabase } = require('./scripts/seed');
+
+// Wrap all requires in try-catch to prevent crashes
+let testConnection, sequelize, logger, errorHandler, notFoundHandler, seedDatabase;
+
+try {
+  const dbConfig = require('./config/database');
+  testConnection = dbConfig.testConnection;
+  sequelize = dbConfig.sequelize;
+} catch (err) {
+  console.error('⚠️  Database config error:', err.message);
+}
+
+try {
+  logger = require('./utils/logger').logger;
+} catch (err) {
+  console.error('⚠️  Logger error:', err.message);
+  logger = (req, res, next) => next(); // Fallback logger
+}
+
+try {
+  const errorHandlers = require('./middleware/errorHandler');
+  errorHandler = errorHandlers.errorHandler;
+  notFoundHandler = errorHandlers.notFoundHandler;
+} catch (err) {
+  console.error('⚠️  Error handler error:', err.message);
+  // Fallback error handler
+  errorHandler = (err, req, res, next) => {
+    res.status(err.status || 500).json({
+      success: false,
+      message: err.message || 'Internal server error'
+    });
+  };
+  notFoundHandler = (req, res, next) => {
+    const error = new Error(`Route ${req.originalUrl} not found`);
+    error.status = 404;
+    next(error);
+  };
+}
+
+// Don't load routes at startup - load them lazily on first request
+// This prevents Passenger timeout by avoiding synchronous module loading
+// that triggers controllers → models → database access chain
+let routes = null;
+const loadRoutes = () => {
+  if (!routes) {
+    try {
+      routes = require('./routes');
+      console.log('✅ Routes loaded on first request');
+    } catch (err) {
+      console.error('⚠️  Routes error:', err.message);
+      routes = express.Router(); // Fallback empty router
+    }
+  }
+  return routes;
+};
+
+try {
+  seedDatabase = require('./scripts/seed').seedDatabase;
+} catch (err) {
+  console.error('⚠️  Seed error:', err.message);
+  seedDatabase = async () => {}; // Fallback empty function
+}
 
 // Initialize Express app
 const app = express();
+
+// Create public/tmp directory if it doesn't exist (for Passenger error files)
+// This prevents "directory not found" errors when Passenger tries to write error files
+const fs = require('fs');
+const publicTmpPath = path.join(__dirname, 'public', 'tmp');
+try {
+  if (!fs.existsSync(publicTmpPath)) {
+    fs.mkdirSync(publicTmpPath, { recursive: true });
+    console.log('✅ Created public/tmp directory for Passenger error files');
+  }
+} catch (dirError) {
+  console.error('⚠️  Could not create public/tmp directory:', dirError.message);
+  // Non-critical - continue anyway
+}
 
 // Middleware
 // CORS configuration - allow multiple origins for development
@@ -56,159 +128,188 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(logger);
 
-// API Routes
-app.use('/api', routes);
+// Async error wrapper - catches async errors in route handlers
+const asyncHandler = (fn) => {
+  return (req, res, next) => {
+    Promise.resolve(fn(req, res, next)).catch(next);
+  };
+};
 
-// Health check endpoint
+// Lazy database initialization - only runs on first API request
+// This prevents Passenger timeout by not blocking app startup
+let dbInitialized = false;
+let dbInitInProgress = false;
+
+const lazyDbInit = async (req, res, next) => {
+  // If already initialized, continue immediately
+  if (dbInitialized) {
+    return next();
+  }
+  
+  // If initialization is in progress, continue without waiting
+  // This prevents multiple simultaneous initializations
+  if (dbInitInProgress) {
+    return next();
+  }
+  
+  // Check if database config is available
+  if (!testConnection || !sequelize || typeof testConnection !== 'function') {
+    console.error('⚠️  Database config not available. Skipping initialization.');
+    return next(); // Continue anyway - app can work without DB for health checks
+  }
+  
+  // Start initialization in background (don't block request)
+  dbInitInProgress = true;
+  setImmediate(async () => {
+    try {
+      console.log('🔄 Lazy database initialization started...');
+      
+      // Test database connection with timeout
+      const connectionPromise = testConnection();
+      const timeoutPromise = new Promise((resolve) => {
+        setTimeout(() => resolve(false), 5000);
+      });
+      
+      const dbConnected = await Promise.race([connectionPromise, timeoutPromise]);
+      
+      if (dbConnected && sequelize) {
+        // Sync database models (create tables if they don't exist)
+        try {
+          await sequelize.sync({ alter: false });
+          console.log('✅ Database sync completed');
+        } catch (syncError) {
+          console.error('⚠️  Database sync warning:', syncError.message);
+        }
+        
+        // Seed database with initial data (only if needed)
+        if (seedDatabase && typeof seedDatabase === 'function') {
+          try {
+            await seedDatabase();
+          } catch (seedError) {
+            console.error('⚠️  Database seed warning:', seedError.message);
+          }
+        }
+        
+        dbInitialized = true;
+        console.log('✅ Database initialization completed');
+      } else {
+        console.error('⚠️  Database connection failed or timed out. Will retry on next request.');
+        console.error('⚠️  Check if Railway database service is online.');
+      }
+    } catch (error) {
+      console.error('❌ Database initialization error:', error.message);
+    } finally {
+      dbInitInProgress = false;
+    }
+  });
+  
+  // Continue with request immediately (don't wait for DB init)
+  // This allows the app to respond even if database is offline
+  next();
+};
+
+// Health check endpoint (for API testing) - works even if routes aren't loaded
+// Define BEFORE /api route to ensure it's accessible immediately
+app.get('/api/health', (req, res) => {
+  res.json({
+    success: true,
+    message: 'API is running',
+    timestamp: new Date().toISOString(),
+    database: dbInitialized ? 'connected' : 'pending',
+    routes: routes ? 'loaded' : 'pending'
+  });
+});
+
+// API Routes with lazy database initialization AND lazy route loading
+// Routes are loaded on first request to prevent Passenger timeout
+app.use('/api', lazyDbInit, (req, res, next) => {
+  try {
+    const routeHandler = loadRoutes();
+    // Execute route handler - errors will be caught by global error handler
+    routeHandler(req, res, next);
+  } catch (err) {
+    console.error('⚠️  Error loading or executing routes:', err.message);
+    console.error('⚠️  Stack:', err.stack);
+    // Ensure we return JSON, not HTML
+    if (!res.headersSent) {
+      res.setHeader('Content-Type', 'application/json');
+      res.status(500).json({
+        success: false,
+        message: 'Route error: ' + (err.message || 'Unknown error'),
+        ...(env.NODE_ENV === 'development' && { stack: err.stack })
+      });
+    } else {
+      // If headers already sent, pass to error handler
+      next(err);
+    }
+  }
+});
+
+// Root endpoint - serve API info
 app.get('/', (req, res) => {
   res.json({
     success: true,
     message: 'TayseerulQuran Backend API',
     version: '1.0.0',
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
+    endpoints: {
+      health: '/api/health',
+      auth: '/api/auth',
+      courses: '/api/courses',
+      users: '/api/users'
+    }
   });
 });
 
-// 404 handler
-app.use(notFoundHandler);
-
-// Error handler (must be last)
-app.use(errorHandler);
-
-// Initialize database (runs for both standalone and Passenger)
-const initializeDatabase = async () => {
-  try {
-    // Test database connection
-    const dbConnected = await testConnection();
-    
-    if (!dbConnected && env.NODE_ENV === 'production') {
-      console.error('❌ Database connection failed. Exiting...');
-      process.exit(1);
+// 404 handler (for API routes only) - ensure it returns JSON
+app.use((req, res, next) => {
+  // Only handle API routes with 404
+  if (req.path.startsWith('/api')) {
+    if (!res.headersSent) {
+      res.setHeader('Content-Type', 'application/json');
+      res.status(404).json({
+        success: false,
+        message: `API route ${req.originalUrl} not found`
+      });
     }
-
-    // Sync database models (create tables if they don't exist)
-    // Using { alter: false } to avoid modifying existing tables
-    try {
-      console.log('🔄 Syncing database models...');
-      await sequelize.sync({ alter: false });
-      console.log('✅ Main database sync completed');
-    } catch (syncError) {
-      console.error('⚠️  Database sync warning:', syncError.message);
-      // Continue even if sync has issues (tables might already exist)
-    }
-    
-    // Explicitly ensure all tables exist (they might not be created by sync)
-    // This runs regardless of whether the main sync succeeded or failed
-    console.log('🔄 Ensuring all tables exist...');
-    const { UserRole, RolePermission, StudentCourse, BlogPost, Course, Payment, Student, Tutor, Contact } = require('./models');
-    
-    // Sync junction tables
-    try {
-      await UserRole.sync({ alter: false });
-      console.log('✅ UserRole table verified');
-    } catch (err) {
-      console.error('⚠️  UserRole sync error:', err.message);
-    }
-    
-    try {
-      await RolePermission.sync({ alter: false });
-      console.log('✅ RolePermission table verified');
-    } catch (err) {
-      console.error('⚠️  RolePermission sync error:', err.message);
-    }
-    
-    try {
-      await StudentCourse.sync({ alter: false });
-      console.log('✅ StudentCourse table verified');
-    } catch (err) {
-      console.error('⚠️  StudentCourse sync error:', err.message);
-    }
-    
-    // Sync main tables
-    console.log('🔄 Syncing main tables (BlogPost, Course, Payment, Student, Tutor, Contact)...');
-    
-    try {
-      await BlogPost.sync({ alter: false });
-      console.log('✅ BlogPost table synced');
-    } catch (err) {
-      console.error('⚠️  BlogPost sync error:', err.message);
-      // Try to create table manually if sync fails
-      try {
-        await sequelize.query(`
-          CREATE TABLE IF NOT EXISTS blog_posts (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            title VARCHAR(255) NOT NULL,
-            slug VARCHAR(255) NOT NULL UNIQUE,
-            content TEXT NOT NULL,
-            excerpt VARCHAR(500),
-            featuredImage VARCHAR(500),
-            authorId INT NOT NULL,
-            category VARCHAR(100),
-            tags VARCHAR(500),
-            views INT DEFAULT 0,
-            isPublished BOOLEAN DEFAULT FALSE,
-            publishedAt DATETIME,
-            isActive BOOLEAN DEFAULT TRUE,
-            createdAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            updatedAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-            FOREIGN KEY (authorId) REFERENCES users(id) ON DELETE CASCADE
-          ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-        `);
-        console.log('✅ BlogPost table created manually');
-      } catch (createErr) {
-        console.error('❌ Failed to create BlogPost table:', createErr.message);
-      }
-    }
-    
-    try {
-      await Course.sync({ alter: false });
-      console.log('✅ Course table synced');
-    } catch (err) {
-      console.error('⚠️  Course sync error:', err.message);
-    }
-    
-    try {
-      await Payment.sync({ alter: false });
-      console.log('✅ Payment table synced');
-    } catch (err) {
-      console.error('⚠️  Payment sync error:', err.message);
-    }
-    
-    try {
-      await Student.sync({ alter: false });
-      console.log('✅ Student table synced');
-    } catch (err) {
-      console.error('⚠️  Student sync error:', err.message);
-    }
-    
-    try {
-      await Tutor.sync({ alter: false });
-      console.log('✅ Tutor table synced');
-    } catch (err) {
-      console.error('⚠️  Tutor sync error:', err.message);
-    }
-    
-    try {
-      await Contact.sync({ alter: false });
-      console.log('✅ Contact table synced');
-    } catch (err) {
-      console.error('⚠️  Contact sync error:', err.message);
-    }
-    
-    console.log('✅ All tables verified');
-
-    // Seed database with initial data (roles and test users)
-    // Only runs if tables are empty or data doesn't exist
-    if (dbConnected) {
-      await seedDatabase();
-    }
-  } catch (error) {
-    console.error('❌ Failed to initialize database:', error);
-    if (env.NODE_ENV === 'production') {
-      process.exit(1);
-    }
+  } else {
+    // For non-API routes, use the notFoundHandler
+    notFoundHandler(req, res, next);
   }
-};
+});
+
+// Global error handler (must be last)
+// ALWAYS return JSON, never HTML - this prevents Passenger HTML error pages
+app.use((err, req, res, next) => {
+  // Always return JSON, never HTML
+  if (!res.headersSent) {
+    const statusCode = err.statusCode || err.status || 500;
+    const message = err.message || 'Internal server error';
+    
+    // Set content type to JSON explicitly - CRITICAL to prevent HTML responses
+    res.setHeader('Content-Type', 'application/json');
+    
+    // Log error for debugging
+    console.error('❌ Error caught by global handler:', {
+      message: message,
+      path: req.path,
+      method: req.method,
+      status: statusCode
+    });
+    
+    res.status(statusCode).json({
+      success: false,
+      message: message,
+      ...(env.NODE_ENV === 'development' && { 
+        stack: err.stack,
+        name: err.name 
+      })
+    });
+  } else {
+    // Headers already sent, just log
+    console.error('❌ Error after headers sent:', err.message);
+  }
+});
 
 // Check if running under Passenger (Plesk)
 const isPassenger = process.env.PASSENGER_APP_ENV || process.env.PASSENGER;
@@ -216,11 +317,9 @@ const isPassenger = process.env.PASSENGER_APP_ENV || process.env.PASSENGER;
 // Start server (only if not running under Passenger)
 const startServer = async () => {
   try {
-    // Initialize database first
-    await initializeDatabase();
-
     // Only start listening if NOT running under Passenger
     // Passenger manages the server itself
+    // Database will initialize on first API request (lazy initialization)
     if (!isPassenger) {
       const PORT = env.PORT;
       app.listen(PORT, () => {
@@ -228,10 +327,8 @@ const startServer = async () => {
         console.log(`📝 Environment: ${env.NODE_ENV}`);
         console.log(`🌐 API URL: http://localhost:${PORT}/api`);
         console.log(`💚 Health Check: http://localhost:${PORT}/api/health`);
+        console.log(`📝 Database will initialize on first API request`);
       });
-    } else {
-      console.log('🚀 Running under Passenger - server managed by Passenger');
-      console.log(`📝 Environment: ${env.NODE_ENV}`);
     }
   } catch (error) {
     console.error('❌ Failed to start server:', error);
@@ -239,31 +336,50 @@ const startServer = async () => {
   }
 };
 
-// Handle unhandled promise rejections
-process.on('unhandledRejection', (err) => {
+// Handle unhandled promise rejections (only register once)
+// CRITICAL: Don't let unhandled rejections crash the app in production
+process.on('unhandledRejection', (err, promise) => {
   console.error('❌ Unhandled Promise Rejection:', err);
-  if (env.NODE_ENV === 'production') {
+  console.error('❌ Promise:', promise);
+  console.error('❌ Stack:', err.stack);
+  // In production, log but don't exit - let Passenger handle it
+  // Exiting would cause Passenger to serve HTML error page
+  if (env.NODE_ENV === 'development') {
     process.exit(1);
   }
+  // In production, just log - the app should continue
 });
 
-// Handle uncaught exceptions
+// Handle uncaught exceptions (only register once)
+// CRITICAL: Don't let uncaught exceptions crash the app in production
 process.on('uncaughtException', (err) => {
   console.error('❌ Uncaught Exception:', err);
-  process.exit(1);
+  console.error('❌ Stack:', err.stack);
+  // In production, log but don't exit - let Passenger handle it
+  // Exiting would cause Passenger to serve HTML error page
+  if (env.NODE_ENV === 'development') {
+    process.exit(1);
+  }
+  // In production, just log - the app should continue
 });
 
-// Initialize database immediately (for Passenger compatibility)
-// Passenger loads the app, so we need to initialize the database when the module loads
+// Export app immediately (critical for Passenger - must be before any async operations)
+// NO database initialization here - it will happen on first API request (lazy initialization)
+module.exports = app;
+
+// For Passenger, just log - no database initialization
 if (isPassenger) {
-  // For Passenger, initialize database asynchronously but don't block
-  initializeDatabase().catch(err => {
-    console.error('❌ Database initialization error:', err);
-  });
+  console.log('🚀 Passenger detected - app ready');
+  console.log('📝 Environment:', env.NODE_ENV);
+  console.log('🌐 App module loaded successfully');
+  console.log('📝 Database will initialize on first API request (lazy initialization)');
+  // NO database initialization here - prevents Passenger timeout
 } else {
   // For standalone mode, start the server normally
-  startServer();
+  try {
+    startServer();
+  } catch (err) {
+    console.error('❌ Failed to start server:', err);
+  }
 }
-
-module.exports = app;
 

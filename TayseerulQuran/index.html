@@ -1337,15 +1337,6 @@
         <script src="assets/js/language-toggle.js"></script>
         
         <!-- Auth Header Script - Updates Sign In/Sign Up to Logout when logged in -->
-        <script>
-            // Force production API URL for tayseerulquran.org
-            if (window.location.hostname === 'tayseerulquran.org' || 
-                window.location.hostname.includes('tayseerulquran.org')) {
-                window.BACKEND_API_URL = window.location.origin + '/api';
-                console.log('Production API URL set to:', window.BACKEND_API_URL);
-            }
-        </script>
-        <script src="assets/js/api.js"></script>
         <!-- Super Admin Protection - Redirect super admin to dashboard -->
         <script>
             (function() {

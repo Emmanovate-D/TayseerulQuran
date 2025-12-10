@@ -11,10 +11,13 @@ const sequelize = new Sequelize(
     port: env.DB_PORT,
     dialect: 'mysql',
     logging: env.NODE_ENV === 'development' ? console.log : false,
+    dialectOptions: {
+      connectTimeout: 5000, // 5 seconds timeout (reduced for Passenger)
+    },
     pool: {
       max: 5,
       min: 0,
-      acquire: 30000,
+      acquire: 5000, // 5 seconds (reduced for Passenger)
       idle: 10000
     },
     define: {
@@ -25,10 +28,16 @@ const sequelize = new Sequelize(
   }
 );
 
-// Test database connection
+// Test database connection with timeout
 const testConnection = async () => {
   try {
-    await sequelize.authenticate();
+    // Wrap authenticate in a timeout promise
+    const authenticatePromise = sequelize.authenticate();
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('Database connection timeout')), 5000);
+    });
+    
+    await Promise.race([authenticatePromise, timeoutPromise]);
     console.log('✅ Database connection established successfully.');
     return true;
   } catch (error) {
