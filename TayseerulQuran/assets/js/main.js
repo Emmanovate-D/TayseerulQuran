@@ -86,17 +86,20 @@
     /*--
         Magnific Popup Activation
     -----------------------------------*/
-    $('.video-popup').magnificPopup({
-        type: 'iframe'
-        // other options
-    });
+    // Check if magnificPopup is available before using it
+    if (typeof $.fn.magnificPopup !== 'undefined') {
+        $('.video-popup').magnificPopup({
+            type: 'iframe'
+            // other options
+        });
 
-    $('.image-popup').magnificPopup({
-        type: 'image',
-        gallery:{
-          enabled:true
-        }
-    });
+        $('.image-popup').magnificPopup({
+            type: 'image',
+            gallery:{
+              enabled:true
+            }
+        });
+    }
 
 
     /*--
