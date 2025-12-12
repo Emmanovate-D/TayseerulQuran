@@ -58,10 +58,11 @@ const StudentCourse = sequelize.define('StudentCourse', {
   }
 }, {
   tableName: 'student_courses',
+  underscored: true,
   indexes: [
     {
       unique: true,
-      fields: ['studentId', 'courseId']
+      fields: ['student_id', 'course_id']
     }
   ]
 });
