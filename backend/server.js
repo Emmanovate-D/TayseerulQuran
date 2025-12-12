@@ -220,6 +220,63 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+// Manual database sync endpoint (for initial setup - creates all missing tables)
+app.get('/api/admin/sync-db', async (req, res) => {
+  try {
+    if (!sequelize) {
+      return res.status(500).json({
+        success: false,
+        message: 'Database not configured'
+      });
+    }
+
+    console.log('🔄 Manual database sync triggered...');
+    
+    // Ensure database connection
+    try {
+      await testConnection();
+      console.log('✅ Database connection verified');
+    } catch (connError) {
+      console.error('❌ Database connection failed:', connError.message);
+      return res.status(500).json({
+        success: false,
+        message: 'Database connection failed',
+        error: connError.message
+      });
+    }
+    
+    // Import all models to ensure they're loaded and registered
+    try {
+      const models = require('./models');
+      console.log('✅ All models loaded');
+    } catch (modelError) {
+      console.error('⚠️  Model loading warning:', modelError.message);
+      // Continue anyway - models might already be loaded
+    }
+    
+    // Force sync all models (create tables if they don't exist)
+    console.log('🔄 Syncing all database models...');
+    await sequelize.sync({ alter: false, force: false });
+    console.log('✅ Database sync completed - all tables created');
+    
+    res.json({
+      success: true,
+      message: 'Database sync completed successfully. All tables should now exist.',
+      timestamp: new Date().toISOString(),
+      database: 'synced'
+    });
+  } catch (error) {
+    console.error('❌ Database sync error:', error);
+    console.error('❌ Error stack:', error.stack);
+    res.status(500).json({
+      success: false,
+      message: 'Database sync failed',
+      error: error.message,
+      ...(env.NODE_ENV === 'development' && { stack: error.stack })
+    });
+  }
+});
+
 // API Routes with lazy database initialization AND lazy route loading
 // Routes are loaded on first request to prevent Passenger timeout
 app.use('/api', lazyDbInit, (req, res, next) => {
