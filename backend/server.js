@@ -249,8 +249,7 @@ app.get('/api/admin/sync-db', async (req, res) => {
     const models = require('./models');
     console.log('✅ All models loaded');
     
-    // Drop problematic junction tables that might have wrong column names
-    // These tables can be safely recreated without losing important data
+    // Drop problematic junction tables completely - they'll be recreated
     const problematicTables = ['role_permissions', 'user_roles'];
     for (const tableName of problematicTables) {
       try {
@@ -258,18 +257,29 @@ app.get('/api/admin/sync-db', async (req, res) => {
         console.log(`✅ Dropped table: ${tableName} (will be recreated)`);
       } catch (dropError) {
         console.log(`⚠️  Could not drop ${tableName}:`, dropError.message);
-        // Continue anyway
       }
     }
     
-    // Sync all models individually to handle errors gracefully
-    console.log('🔄 Syncing all database models...');
-    const modelNames = ['User', 'Role', 'Permission', 'RolePermission', 'UserRole', 
-                        'Course', 'Student', 'Tutor', 'BlogPost', 'Payment', 
-                        'StudentCourse', 'Contact'];
+    // Sync models in dependency order to avoid foreign key errors
+    console.log('🔄 Syncing all database models in dependency order...');
+    
+    // Phase 1: Base tables (no dependencies)
+    const phase1 = ['User', 'Role', 'Permission', 'Student', 'Tutor', 'BlogPost', 'Contact'];
+    
+    // Phase 2: Junction tables (depend on User, Role, Permission)
+    const phase2 = ['RolePermission', 'UserRole'];
+    
+    // Phase 3: Course (depends on Tutor)
+    const phase3 = ['Course'];
+    
+    // Phase 4: Tables that depend on Course
+    const phase4 = ['Payment', 'StudentCourse'];
     
     const syncResults = {};
-    for (const modelName of modelNames) {
+    
+    // Sync Phase 1
+    console.log('📦 Phase 1: Base tables...');
+    for (const modelName of phase1) {
       try {
         const Model = models[modelName];
         if (Model) {
@@ -280,7 +290,55 @@ app.get('/api/admin/sync-db', async (req, res) => {
       } catch (modelError) {
         syncResults[modelName] = modelError.message;
         console.error(`⚠️  Error syncing ${modelName}:`, modelError.message);
-        // Continue with other models
+      }
+    }
+    
+    // Sync Phase 2: Junction tables with force to recreate correctly
+    console.log('📦 Phase 2: Junction tables...');
+    for (const modelName of phase2) {
+      try {
+        const Model = models[modelName];
+        if (Model) {
+          // Use force: true to completely recreate junction tables
+          await Model.sync({ alter: false, force: true });
+          syncResults[modelName] = 'success';
+          console.log(`✅ Synced: ${modelName}`);
+        }
+      } catch (modelError) {
+        syncResults[modelName] = modelError.message;
+        console.error(`⚠️  Error syncing ${modelName}:`, modelError.message);
+      }
+    }
+    
+    // Sync Phase 3: Course (needs Tutor to exist)
+    console.log('📦 Phase 3: Course (depends on Tutor)...');
+    for (const modelName of phase3) {
+      try {
+        const Model = models[modelName];
+        if (Model) {
+          await Model.sync({ alter: false, force: false });
+          syncResults[modelName] = 'success';
+          console.log(`✅ Synced: ${modelName}`);
+        }
+      } catch (modelError) {
+        syncResults[modelName] = modelError.message;
+        console.error(`⚠️  Error syncing ${modelName}:`, modelError.message);
+      }
+    }
+    
+    // Sync Phase 4: Tables that depend on Course
+    console.log('📦 Phase 4: Payment and StudentCourse (depend on Course)...');
+    for (const modelName of phase4) {
+      try {
+        const Model = models[modelName];
+        if (Model) {
+          await Model.sync({ alter: false, force: false });
+          syncResults[modelName] = 'success';
+          console.log(`✅ Synced: ${modelName}`);
+        }
+      } catch (modelError) {
+        syncResults[modelName] = modelError.message;
+        console.error(`⚠️  Error syncing ${modelName}:`, modelError.message);
       }
     }
     
@@ -289,6 +347,7 @@ app.get('/api/admin/sync-db', async (req, res) => {
     // Count successful vs failed syncs
     const successful = Object.values(syncResults).filter(r => r === 'success').length;
     const failed = Object.values(syncResults).filter(r => r !== 'success').length;
+    const total = phase1.length + phase2.length + phase3.length + phase4.length;
     
     res.json({
       success: true,
@@ -299,7 +358,7 @@ app.get('/api/admin/sync-db', async (req, res) => {
       summary: {
         successful,
         failed,
-        total: modelNames.length
+        total
       }
     });
   } catch (error) {
