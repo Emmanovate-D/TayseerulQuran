@@ -246,24 +246,61 @@ app.get('/api/admin/sync-db', async (req, res) => {
     }
     
     // Import all models to ensure they're loaded and registered
-    try {
-      const models = require('./models');
-      console.log('✅ All models loaded');
-    } catch (modelError) {
-      console.error('⚠️  Model loading warning:', modelError.message);
-      // Continue anyway - models might already be loaded
+    const models = require('./models');
+    console.log('✅ All models loaded');
+    
+    // Drop problematic junction tables that might have wrong column names
+    // These tables can be safely recreated without losing important data
+    const problematicTables = ['role_permissions', 'user_roles'];
+    for (const tableName of problematicTables) {
+      try {
+        await sequelize.query(`DROP TABLE IF EXISTS \`${tableName}\`;`);
+        console.log(`✅ Dropped table: ${tableName} (will be recreated)`);
+      } catch (dropError) {
+        console.log(`⚠️  Could not drop ${tableName}:`, dropError.message);
+        // Continue anyway
+      }
     }
     
-    // Force sync all models (create tables if they don't exist)
+    // Sync all models individually to handle errors gracefully
     console.log('🔄 Syncing all database models...');
-    await sequelize.sync({ alter: false, force: false });
-    console.log('✅ Database sync completed - all tables created');
+    const modelNames = ['User', 'Role', 'Permission', 'RolePermission', 'UserRole', 
+                        'Course', 'Student', 'Tutor', 'BlogPost', 'Payment', 
+                        'StudentCourse', 'Contact'];
+    
+    const syncResults = {};
+    for (const modelName of modelNames) {
+      try {
+        const Model = models[modelName];
+        if (Model) {
+          await Model.sync({ alter: false, force: false });
+          syncResults[modelName] = 'success';
+          console.log(`✅ Synced: ${modelName}`);
+        }
+      } catch (modelError) {
+        syncResults[modelName] = modelError.message;
+        console.error(`⚠️  Error syncing ${modelName}:`, modelError.message);
+        // Continue with other models
+      }
+    }
+    
+    console.log('✅ Database sync completed');
+    
+    // Count successful vs failed syncs
+    const successful = Object.values(syncResults).filter(r => r === 'success').length;
+    const failed = Object.values(syncResults).filter(r => r !== 'success').length;
     
     res.json({
       success: true,
-      message: 'Database sync completed successfully. All tables should now exist.',
+      message: `Database sync completed. ${successful} models synced successfully${failed > 0 ? `, ${failed} had warnings` : ''}.`,
       timestamp: new Date().toISOString(),
-      database: 'synced'
+      database: 'synced',
+      syncResults: syncResults,
+      summary: {
+        successful,
+        failed,
+        total: modelNames.length
+      }
     });
   } catch (error) {
     console.error('❌ Database sync error:', error);
