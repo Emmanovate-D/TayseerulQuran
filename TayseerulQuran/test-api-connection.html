@@ -1,89 +1,110 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>API Connection Test</title>
     <style>
-        body { font-family: Arial, sans-serif; padding: 20px; }
-        .test-result { margin: 10px 0; padding: 10px; border-radius: 5px; }
-        .success { background-color: #d4edda; color: #155724; }
-        .error { background-color: #f8d7da; color: #721c24; }
-        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
-        pre { background: #f4f4f4; padding: 10px; border-radius: 5px; overflow-x: auto; }
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-box {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .success { color: #28a745; }
+        .error { color: #dc3545; }
+        .info { color: #007bff; }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover { background: #0056b3; }
+        pre {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
     </style>
 </head>
 <body>
-    <h1>API Connection Test</h1>
-    <button onclick="testHealth()">Test Health Endpoint</button>
-    <button onclick="testLogin()">Test Login</button>
-    <div id="results"></div>
+    <div class="test-box">
+        <h1>🔍 API Connection Test</h1>
+        <p><strong>Current Domain:</strong> <span id="current-domain"></span></p>
+        <p><strong>Expected API URL:</strong> <span id="expected-api" class="info"></span></p>
+        <p><strong>Actual API URL:</strong> <span id="actual-api" class="info"></span></p>
+    </div>
+
+    <div class="test-box">
+        <h2>Test Backend Connection</h2>
+        <button onclick="testHealth()">Test Health Endpoint</button>
+        <button onclick="testLogin()">Test Login Endpoint</button>
+        <div id="results"></div>
+    </div>
 
     <script>
-        // Force production API URL for tayseerulquran.org
+        // Set API URL override (same as in login.html)
         if (window.location.hostname === 'tayseerulquran.org' || 
             window.location.hostname.includes('tayseerulquran.org')) {
-            window.BACKEND_API_URL = window.location.origin + '/api';
-            console.log('Production API URL set to:', window.BACKEND_API_URL);
+            window.BACKEND_API_URL = 'https://tayseerulquran.onrender.com/api';
         }
-    </script>
-    <script src="assets/js/api.js"></script>
-    <script>
-        const API_BASE = 'https://tayseerulquran.onrender.com';
-        
+
+        // Load api.js to get the actual API URL being used
+        const script = document.createElement('script');
+        script.src = 'assets/js/api.js';
+        script.onload = () => {
+            document.getElementById('current-domain').textContent = window.location.hostname;
+            document.getElementById('expected-api').textContent = 'https://tayseerulquran.onrender.com/api';
+            
+            // Get actual API URL from api.js
+            if (window.API_CONFIG && window.API_CONFIG.BASE_URL) {
+                document.getElementById('actual-api').textContent = window.API_CONFIG.BASE_URL;
+            } else {
+                // Fallback: check what api.js would use
+                const hostname = window.location.hostname;
+                if (hostname === 'tayseerulquran.org' || hostname.includes('tayseerulquran.org')) {
+                    document.getElementById('actual-api').textContent = 'https://tayseerulquran.onrender.com/api';
+                } else {
+                    document.getElementById('actual-api').textContent = window.location.origin + '/api';
+                }
+            }
+        };
+        document.head.appendChild(script);
+
         async function testHealth() {
             const resultsDiv = document.getElementById('results');
-            resultsDiv.innerHTML = '<div class="test-result">Testing health endpoint...</div>';
-            
+            resultsDiv.innerHTML = '<p class="info">Testing health endpoint...</p>';
+
             try {
-                const response = await fetch(`${API_BASE}/`);
+                const apiUrl = window.BACKEND_API_URL || 'https://tayseerulquran.onrender.com/api';
+                const response = await fetch(apiUrl + '/health');
                 const data = await response.json();
-                
-                resultsDiv.innerHTML = `
-                    <div class="test-result success">
-                        <h3>✅ Health Check Success</h3>
-                        <pre>${JSON.stringify(data, null, 2)}</pre>
-                    </div>
-                `;
-            } catch (error) {
-                resultsDiv.innerHTML = `
-                    <div class="test-result error">
-                        <h3>❌ Health Check Failed</h3>
-                        <p>Error: ${error.message}</p>
-                    </div>
-                `;
-            }
-        }
-        
-        async function testLogin() {
-            const resultsDiv = document.getElementById('results');
-            resultsDiv.innerHTML = '<div class="test-result">Testing login...</div>';
-            
-            try {
-                const response = await fetch(`${API_BASE}/api/auth/login`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        email: 'superadmin@tayseerulquran.com',
-                        password: 'SuperAdmin123!'
-                    })
-                });
-                
-                const data = await response.json();
-                
+
                 if (response.ok) {
                     resultsDiv.innerHTML = `
-                        <div class="test-result success">
-                            <h3>✅ Login Test Success</h3>
-                            <p>Status: ${response.status}</p>
+                        <div class="test-box success">
+                            <h3>✅ Health Check Success!</h3>
                             <pre>${JSON.stringify(data, null, 2)}</pre>
-                            <p><strong>User Roles:</strong> ${data.data?.user?.roles ? JSON.stringify(data.data.user.roles.map(r => r.name)) : 'No roles found'}</p>
+                            <p><strong>API URL Used:</strong> ${apiUrl}/health</p>
                         </div>
                     `;
                 } else {
                     resultsDiv.innerHTML = `
-                        <div class="test-result error">
-                            <h3>❌ Login Test Failed</h3>
+                        <div class="test-box error">
+                            <h3>❌ Health Check Failed</h3>
                             <p>Status: ${response.status}</p>
                             <pre>${JSON.stringify(data, null, 2)}</pre>
                         </div>
@@ -91,9 +112,88 @@
                 }
             } catch (error) {
                 resultsDiv.innerHTML = `
-                    <div class="test-result error">
-                        <h3>❌ Login Test Error</h3>
-                        <p>Error: ${error.message}</p>
+                    <div class="test-box error">
+                        <h3>❌ Connection Error</h3>
+                        <p><strong>Error:</strong> ${error.message}</p>
+                        <p><strong>API URL Attempted:</strong> ${window.BACKEND_API_URL || 'Not set'}/health</p>
+                        <p>This usually means:</p>
+                        <ul>
+                            <li>The backend is not running on Render</li>
+                            <li>The API URL is incorrect</li>
+                            <li>There's a network/CORS issue</li>
+                        </ul>
+                    </div>
+                `;
+            }
+        }
+
+        async function testLogin() {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '<p class="info">Testing login endpoint (will fail with 401, but should not be 404)...</p>';
+
+            try {
+                const apiUrl = window.BACKEND_API_URL || 'https://tayseerulquran.onrender.com/api';
+                const response = await fetch(apiUrl + '/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        email: 'test@test.com',
+                        password: 'test'
+                    })
+                });
+
+                const text = await response.text();
+                let data;
+                try {
+                    data = JSON.parse(text);
+                } catch {
+                    data = { raw: text };
+                }
+
+                if (response.status === 404) {
+                    resultsDiv.innerHTML = `
+                        <div class="test-box error">
+                            <h3>❌ 404 Not Found - Wrong API URL!</h3>
+                            <p><strong>Status:</strong> ${response.status}</p>
+                            <p><strong>API URL Used:</strong> ${apiUrl}/auth/login</p>
+                            <p><strong>Response:</strong></p>
+                            <pre>${text.substring(0, 500)}</pre>
+                            <p><strong>This means:</strong> The frontend is calling the wrong backend URL. Check that:</p>
+                            <ul>
+                                <li>✅ Files on Plesk have been updated with Render URL</li>
+                                <li>✅ Browser cache has been cleared</li>
+                                <li>✅ api.js file contains: 'https://tayseerulquran.onrender.com/api'</li>
+                            </ul>
+                        </div>
+                    `;
+                } else if (response.status === 401) {
+                    resultsDiv.innerHTML = `
+                        <div class="test-box success">
+                            <h3>✅ Login Endpoint Found! (401 = Wrong Credentials, but endpoint exists)</h3>
+                            <p><strong>Status:</strong> ${response.status} (Expected - wrong credentials)</p>
+                            <p><strong>API URL Used:</strong> ${apiUrl}/auth/login</p>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                            <p class="success">✅ The backend is correctly configured!</p>
+                        </div>
+                    `;
+                } else {
+                    resultsDiv.innerHTML = `
+                        <div class="test-box">
+                            <h3>Response Received</h3>
+                            <p><strong>Status:</strong> ${response.status}</p>
+                            <p><strong>API URL Used:</strong> ${apiUrl}/auth/login</p>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = `
+                    <div class="test-box error">
+                        <h3>❌ Connection Error</h3>
+                        <p><strong>Error:</strong> ${error.message}</p>
+                        <p><strong>API URL Attempted:</strong> ${window.BACKEND_API_URL || 'Not set'}/auth/login</p>
                     </div>
                 `;
             }
@@ -101,7 +201,3 @@
     </script>
 </body>
 </html>
-
-
-
-
