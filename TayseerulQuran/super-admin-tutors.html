@@ -234,7 +234,7 @@
                     <div class="modal-body">
                         <div class="row">
                             <div class="col-md-4 text-center">
-                                <img src="assets/images/author/author-04.jpg" class="rounded-circle mb-3" width="150" height="150" alt="">
+                                <img src="assets/images/author/author-01.jpg" class="rounded-circle mb-3" width="150" height="150" alt="">
                                 <h5>Sarah Williams</h5>
                                 <p class="text-muted">Tutor ID: TUT001</p>
                                 <span class="badge bg-warning">Pending Approval</span>
@@ -577,7 +577,7 @@
                             const specialization = tutor.specialization || 'N/A';
                             const experience = tutor.experience ? `${tutor.experience} years` : 'N/A';
                             const appliedDate = tutor.createdAt ? new Date(tutor.createdAt).toLocaleDateString() : 'N/A';
-                            const profileImage = user.profileImage || 'assets/images/author/author-04.jpg';
+                            const profileImage = user.profileImage || 'assets/images/author/author-01.jpg';
                             
                             pendingHtml += `
                                 <tr data-tutor-id="${tutor.id}">
@@ -786,7 +786,7 @@
                     const bio = tutor.bio || 'No bio available';
                     const qualifications = tutor.qualifications || 'N/A';
                     const appliedDate = tutor.createdAt ? new Date(tutor.createdAt).toLocaleDateString() : 'N/A';
-                    const profileImage = user.profileImage || 'assets/images/author/author-04.jpg';
+                    const profileImage = user.profileImage || 'assets/images/author/author-01.jpg';
                     const status = tutor.isApproved ? '<span class="badge bg-success">Approved</span>' : '<span class="badge bg-warning">Pending Approval</span>';
                     
                     // Update modal content

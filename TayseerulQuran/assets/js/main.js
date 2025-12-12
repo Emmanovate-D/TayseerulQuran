@@ -105,129 +105,132 @@
     /*--
         Courses Tabs Menu
     -----------------------------------*/
-    var tayseerulquran = new Swiper('.courses-active .swiper-container', {
-        speed: 600,
-        spaceBetween: 30,        
-        navigation: {
-            nextEl: '.courses-active .swiper-button-next',
-            prevEl: '.courses-active .swiper-button-prev',
-        },       
-        breakpoints: {
-            0: {
-                slidesPerView: 1,
+    // Check if Swiper is available before using it
+    if (typeof Swiper !== 'undefined') {
+        var tayseerulquran = new Swiper('.courses-active .swiper-container', {
+            speed: 600,
+            spaceBetween: 30,        
+            navigation: {
+                nextEl: '.courses-active .swiper-button-next',
+                prevEl: '.courses-active .swiper-button-prev',
+            },       
+            breakpoints: {
+                0: {
+                    slidesPerView: 1,
+                },
+                576: {
+                    slidesPerView: 2,
+                },  
+                768: {
+                    slidesPerView: 3,
+                },            
+                992: {
+                    slidesPerView: 4,
+                },            
+                1200: {
+                    slidesPerView: 5,
+                }
             },
-            576: {
-                slidesPerView: 2,
-            },  
-            768: {
-                slidesPerView: 3,
-            },            
-            992: {
-                slidesPerView: 4,
-            },            
-            1200: {
-                slidesPerView: 5,
-            }
-        },
-    });
+        });
 
 
-    /*--
-        Testimonial
-    -----------------------------------*/
-    var tayseerulquran = new Swiper('.testimonial-active .swiper-container', {
-        speed: 600,
-        spaceBetween: 30,        
-        pagination: {
-            el: '.testimonial-active .swiper-pagination',
-            clickable: true,
-        },
-        breakpoints: {
-            0: {
-                slidesPerView: 1,
-            },  
-            768: {
-                slidesPerView: 1,
-            },            
-            992: {
-                slidesPerView: 2,
-            }
-        },
-    });
-
-
-    /*--
-        Brand
-    -----------------------------------*/
-    var tayseerulquran = new Swiper('.brand-active .swiper-container', {
-        speed: 600,
-        spaceBetween: 30,
-        loop: true,
-        breakpoints: {
-            0: {
-                slidesPerView: 2,
-                spaceBetween: 20,
-            },  
-            576: {
-                slidesPerView: 3,
-            },  
-            768: {
-                slidesPerView: 4,
-            },            
-            992: {
-                slidesPerView: 5,
-                spaceBetween: 45,
-            },            
-            1200: {
-                slidesPerView: 5,
-                spaceBetween: 85,
-            }
-        },
-        autoplay: {
-            delay: 8000,
-        },
-    });
-
-
-    /*--
-        Reviews
-    -----------------------------------*/
-    var tayseerulquran = new Swiper('.reviews-active .swiper-container', {
-        speed: 600,
-        spaceBetween: 30,
-        loop: true,  
-        pagination: {
-            el: '.reviews-active .swiper-pagination',
-            clickable: true,
-        },      
-        autoplay: {
-            delay: 8000,
-        },
-    });
-
-
-    /*--
-        Student's
-    -----------------------------------*/
-    var tayseerulquran = new Swiper('.students-active .swiper-container', {
-        speed: 600,
-        spaceBetween: 30,        
-        navigation: {
-            nextEl: '.students-active .swiper-button-next',
-            prevEl: '.students-active .swiper-button-prev',
-        },       
-        breakpoints: {
-            0: {
-                slidesPerView: 1,
-            },  
-            768: {
-                slidesPerView: 2,
+        /*--
+            Testimonial
+        -----------------------------------*/
+        var tayseerulquran = new Swiper('.testimonial-active .swiper-container', {
+            speed: 600,
+            spaceBetween: 30,        
+            pagination: {
+                el: '.testimonial-active .swiper-pagination',
+                clickable: true,
             },
-            1600: {
-                slidesPerView: 3,
-            }
-        },
-    });
+            breakpoints: {
+                0: {
+                    slidesPerView: 1,
+                },  
+                768: {
+                    slidesPerView: 1,
+                },            
+                992: {
+                    slidesPerView: 2,
+                }
+            },
+        });
+
+
+        /*--
+            Brand
+        -----------------------------------*/
+        var tayseerulquran = new Swiper('.brand-active .swiper-container', {
+            speed: 600,
+            spaceBetween: 30,
+            loop: true,
+            breakpoints: {
+                0: {
+                    slidesPerView: 2,
+                    spaceBetween: 20,
+                },  
+                576: {
+                    slidesPerView: 3,
+                },  
+                768: {
+                    slidesPerView: 4,
+                },            
+                992: {
+                    slidesPerView: 5,
+                    spaceBetween: 45,
+                },            
+                1200: {
+                    slidesPerView: 5,
+                    spaceBetween: 85,
+                }
+            },
+            autoplay: {
+                delay: 8000,
+            },
+        });
+
+
+        /*--
+            Reviews
+        -----------------------------------*/
+        var tayseerulquran = new Swiper('.reviews-active .swiper-container', {
+            speed: 600,
+            spaceBetween: 30,
+            loop: true,  
+            pagination: {
+                el: '.reviews-active .swiper-pagination',
+                clickable: true,
+            },      
+            autoplay: {
+                delay: 8000,
+            },
+        });
+
+
+        /*--
+            Student's
+        -----------------------------------*/
+        var tayseerulquran = new Swiper('.students-active .swiper-container', {
+            speed: 600,
+            spaceBetween: 30,        
+            navigation: {
+                nextEl: '.students-active .swiper-button-next',
+                prevEl: '.students-active .swiper-button-prev',
+            },       
+            breakpoints: {
+                0: {
+                    slidesPerView: 1,
+                },  
+                768: {
+                    slidesPerView: 2,
+                },
+                1600: {
+                    slidesPerView: 3,
+                }
+            },
+        });
+    }
 
 
     /*--
