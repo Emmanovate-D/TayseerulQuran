@@ -1151,7 +1151,7 @@
                     $('#viewStudentModal .modal-body').html(`
                         <div class="row">
                             <div class="col-md-4 text-center">
-                                <img src="${profileImage}" class="rounded-circle mb-3" width="150" height="150" alt="" onerror="this.src='assets/images/author/author-01.jpg'">
+                                <img src="${profileImage}" class="rounded-circle mb-3" width="150" height="150" alt="" onerror="this.src='assets/images/author/author-01.jpg'; this.onerror=function(){this.src='assets/images/logo-icon.png';};">
                                 <h5>${fullName}</h5>
                                 <p class="text-muted">Student ID: STD${String(studentId).padStart(3, '0')}</p>
                                 ${status}
@@ -1408,7 +1408,7 @@
                             <td>${studentId}</td>
                             <td>
                                 <div class="d-flex align-items-center">
-                                    <img src="${profileImage}" class="rounded-circle me-2" width="40" height="40" alt="" onerror="this.src='assets/images/author/author-01.jpg'">
+                                    <img src="${profileImage}" class="rounded-circle me-2" width="40" height="40" alt="" onerror="this.src='assets/images/author/author-01.jpg'; this.onerror=function(){this.src='assets/images/logo-icon.png';};">
                                     <div>
                                         <strong>${fullName}</strong>
                                         <br><small class="text-muted">Student ID: STD${String(studentId).padStart(3, '0')}</small>

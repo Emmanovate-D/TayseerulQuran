@@ -1,0 +1,53 @@
+# Render Environment Variables - Copy and Paste
+
+# ============================================
+# REQUIRED VARIABLES
+# ============================================
+
+# Application Environment
+NODE_ENV=production
+PORT=10000
+
+# Database Configuration (Replace with your Railway values)
+DB_HOST=<YOUR_RAILWAY_MYSQLHOST>
+DB_PORT=3306
+DB_NAME=<YOUR_RAILWAY_MYSQLDATABASE>
+DB_USER=<YOUR_RAILWAY_MYSQLUSER>
+DB_PASSWORD=<YOUR_RAILWAY_MYSQLPASSWORD>
+
+# JWT Security (Replace with generated secrets)
+JWT_SECRET=<GENERATE_RANDOM_STRING_64_CHARS>
+JWT_EXPIRE=7d
+JWT_REFRESH_SECRET=<GENERATE_ANOTHER_RANDOM_STRING_64_CHARS>
+JWT_REFRESH_EXPIRE=30d
+
+# CORS Configuration (Replace with your actual service name)
+CORS_ORIGIN=https://tayseerulquran.org,https://your-service-name.onrender.com
+
+# ============================================
+# OPTIONAL: Payment Gateway Variables
+# ============================================
+# Only add these if you're using payment gateways
+
+# Stripe (if using Stripe)
+# STRIPE_SECRET_KEY=sk_live_your_stripe_secret_key
+# STRIPE_PUBLISHABLE_KEY=pk_live_your_stripe_publishable_key
+# STRIPE_WEBHOOK_SECRET=whsec_your_webhook_secret
+
+# PayPal (if using PayPal)
+# PAYPAL_CLIENT_ID=your_paypal_client_id
+# PAYPAL_CLIENT_SECRET=your_paypal_client_secret
+# PAYPAL_WEBHOOK_SECRET=your_paypal_webhook_secret
+# PAYPAL_MODE=live
+
+# ============================================
+# INSTRUCTIONS
+# ============================================
+# 1. Replace <YOUR_RAILWAY_*> with actual values from Railway Variables tab
+# 2. Generate JWT secrets using: node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+# 3. Replace <your-service-name> with your actual Render service name
+# 4. Copy each variable to Render dashboard (one at a time)
+# 5. Mark DB_PASSWORD, JWT_SECRET, and JWT_REFRESH_SECRET as "Secret" in Render
+
+
+

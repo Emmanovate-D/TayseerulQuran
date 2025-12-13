@@ -234,7 +234,7 @@
                     <div class="modal-body">
                         <div class="row">
                             <div class="col-md-4 text-center">
-                                <img src="assets/images/author/author-01.jpg" class="rounded-circle mb-3" width="150" height="150" alt="">
+                                <img src="assets/images/author/author-01.jpg" class="rounded-circle mb-3" width="150" height="150" alt="" onerror="this.src='assets/images/logo-icon.png'; this.onerror=null;">
                                 <h5>Sarah Williams</h5>
                                 <p class="text-muted">Tutor ID: TUT001</p>
                                 <span class="badge bg-warning">Pending Approval</span>
@@ -583,7 +583,7 @@
                                 <tr data-tutor-id="${tutor.id}">
                                     <td>
                                         <div class="d-flex align-items-center">
-                                            <img src="${profileImage}" class="rounded-circle me-2" width="40" height="40" alt="">
+                                            <img src="${profileImage}" class="rounded-circle me-2" width="40" height="40" alt="" onerror="this.src='assets/images/author/author-01.jpg'; this.onerror=function(){this.src='assets/images/logo-icon.png';};">
                                             <strong>${fullName}</strong>
                                         </div>
                                     </td>
@@ -627,7 +627,7 @@
                                 <tr data-tutor-id="${tutor.id}">
                                     <td>
                                         <div class="d-flex align-items-center">
-                                            <img src="${profileImage}" class="rounded-circle me-2" width="40" height="40" alt="">
+                                            <img src="${profileImage}" class="rounded-circle me-2" width="40" height="40" alt="" onerror="this.src='assets/images/author/author-01.jpg'; this.onerror=function(){this.src='assets/images/logo-icon.png';};">
                                             <strong>${fullName}</strong>
                                         </div>
                                     </td>
@@ -793,7 +793,7 @@
                     $('#viewTutorModal .modal-body').html(`
                         <div class="row">
                             <div class="col-md-4 text-center">
-                                <img src="${profileImage}" class="rounded-circle mb-3" width="150" height="150" alt="">
+                                <img src="${profileImage}" class="rounded-circle mb-3" width="150" height="150" alt="" onerror="this.src='assets/images/author/author-01.jpg'; this.onerror=function(){this.src='assets/images/logo-icon.png';};">
                                 <h5>${fullName}</h5>
                                 <p class="text-muted">Tutor ID: ${tutor.tutorId || 'N/A'}</p>
                                 ${status}

@@ -22,9 +22,9 @@ const API_CONFIG = {
     
     // Check if we're on tayseerulquran.org (production domain)
     if (hostname === 'tayseerulquran.org' || hostname.includes('tayseerulquran.org')) {
-      // Use same domain for backend (if backend is on same server)
-      const apiUrl = origin + '/api';
-      console.log('Using Plesk API URL:', apiUrl);
+      // Use Render backend
+      const apiUrl = 'https://tayseerulquran.onrender.com/api';
+      console.log('Using Render API URL:', apiUrl);
       return apiUrl;
     }
     
